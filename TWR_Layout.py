@@ -918,8 +918,13 @@ for i in range(len(CellList)):
 
 print(CellList)
 # import os
-
-l.drawing.saveFile("/Users/ronlipton/Dropbox/Programming/TWR_layout/TWR_PYC_V18.1.gds")
+from pathlib import Path
+home_directory = Path.home()
+#print(home_directory)
+gdsversion = "18.1"
+gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
+#print(gdsfile)
+l.drawing.saveFile(gdsfile)
 
 print("Python script completed")
 
