@@ -84,9 +84,6 @@ def erdraw(c, xgr, ygr, wlow, whigh, layer, radius):
         pa.attach(x, y + sy * (radius - wlow))
         pa.attach(x, y + sy * (radius + whigh))
         c.addPolygon(pointArray(pa), layer)
-    #	pa.attach()
-    #    angle = angle+90
-    #    horiz = not horiz
     #
     #      connect arcs
     #
@@ -209,9 +206,7 @@ def NewCell(CName):
 
 
 import math
-
-
-def DrawBump(radius, name, layer):
+def DrawBump(BP, radius, layer):
     angle = 0.785398163
     sangle = angle / 2
     vertices = [(round(radius * math.cos(i * angle - sangle)), round(radius * math.sin(i * angle - sangle))) for i in
@@ -222,10 +217,8 @@ def DrawBump(radius, name, layer):
     for i in range(len(vertices)):
         vt = vertices[i]
         pts.attach(x[i], y[i])
-    BP = NewCell(name)
     BP.addPolygon(pts, layer)
-    return BP
-
+    return
 
 #	print(vertices)
 
@@ -406,7 +399,7 @@ CA4x4.addBox(-M1_Width_2, -M1_Width_2, M1_Width, M1_Width, ND)
 # Ohmic p contact
 #CAP4x4.addBox(-M1_Width_2, -M1_Width_2, M1_Width, M1_Width, PSB)
 
-#  Via Cells
+#  Via Cell list
 Via_List = []
 for i in range(len(Via_Cells)):
     ml = NewCell(Via_Cells[i])
@@ -429,7 +422,7 @@ spadLength = 70000
 oxinset = 5000
 e = adddrBox(cp, (-spadLength + oxinset) // 2, (-spadWidth + oxinset) // 2, spadLength - oxinset, spadWidth - oxinset,
              5000, OX)
-e = adddrBox(cp, -spadLength // 2, -spadWidth // 2, spadLength, spadWidth, 5000, MET)
+e = adddrBox(cp, -spadLength // 2, -spadWidth // 2, spadLength, spadWidth, 5000, ZA)
 
 # Small Bond Pad bottom
 cpadl = l.drawing.addCell()
@@ -438,7 +431,7 @@ cp = cpadl.thisCell
 oxinset = 5000
 e = adddrBox(cp, (-spadLength + oxinset) // 2, (-spadWidth + oxinset) // 2, spadLength - oxinset, spadWidth - oxinset,
              5000, OX)
-e = adddrBox(cp, -spadLength // 2, -spadWidth // 2, spadLength, spadWidth, 5000, MET)
+e = adddrBox(cp, -spadLength // 2, -spadWidth // 2, spadLength, spadWidth, 5000, ZA)
 
 # Short Bond Pad
 cpadl = l.drawing.addCell()
@@ -449,9 +442,11 @@ spadLength = 70000
 oxinset = 5000
 e = adddrBox(cp, (-spadLength + oxinset) // 2, (-spadWidth + oxinset) // 2, spadLength - oxinset, spadWidth - oxinset,
              5000, OX)
-e = adddrBox(cp, -spadLength // 2, -spadWidth // 2, spadLength, spadWidth, 5000, MET)
+e = adddrBox(cp, -spadLength // 2, -spadWidth // 2, spadLength, spadWidth, 5000, ZA)
 #   Bump Pad_Cell
-BCell = DrawBump(4000, "BumpPad", ZA)  # Standard bump pad - check dimensions
+BCell = NewCell("BumpPad")
+DrawBump(BCell, 4000, ZA)  # Standard bump pad - check dimensions
+DrawBump(BCell, 3500, OX)
 
 # Metal-Via stack for pads
 M23V23Z = NewCell("M1M2V1V2ZG_Pad")
@@ -493,9 +488,11 @@ Strip_M2 = []
 STInset = 5000  # Strip implant inset from edge
 ST_CA_Pitch = 10000  # Strip contact pitch
 ST_M1_Pitch = 2000  # strip M1 contact strip Pitch
-
+SXY_Active = 5000000
 Strip_imp_width = []
 Strip_Arrays = []
+
+
 for i in range(len(Strip_Pitch)):
     Strip_imp_width.append(Strip_Pitch[i] - STInset)
 # print(Strip_imp_width)
@@ -503,7 +500,6 @@ for i in range(len(Strip_Pitch)):
     sgap = 4000
     SPitch = Strip_Pitch[i]
     Slength = Strip_Length[i]
-    SXY_Active = 5000000
     DCStripn = Strip_name[i]
 
     #	siwidth = Strip_Pitch[i] - STInset
@@ -532,10 +528,6 @@ for i in range(len(Strip_Pitch)):
     ce = Make_M1M2_Mesh(Strip_name[i], Pad_Layers, Pad_Widths, Met_Pitch, lxy, ST_CA_Pitch, ConCell[i], Via_List[1] )
     cd.addCellref(ce, point(0, 0))
 
-
-    if SPitch == 12500:
-        e = cd.addCellref(M23V23Z, point(0, 0))  # bump in cell  center
-
 # P-stop for DC coupled
     if Strip_name[i][0:2] == 'AC':
         pass
@@ -562,6 +554,34 @@ for i in range(len(Strip_Pitch)):
     pref = point(xoff, yoff)
     poff = point(xoff + SPitch, yoff + Slength)
     e = astr.addCellrefArray(cd, pref, poff, NstRow, NstCol)
+
+
+#
+#   Stqggered 125 um bump array cell
+#       Current design - left - straight array of bumps, left - staggered pads
+#
+indx_125 = 0
+Bump_125 = NewCell("Bump_125_Arr")
+Bump_125_stgr = NewCell("Bump_125_Stg")  # staggered bumps
+SPitch = Strip_Pitch[indx_125]
+Slength = Strip_Length[indx_125]
+NstRow = SXY_Active // SPitch
+NstCol = SXY_Active // Slength
+xoff = -(((NstRow) - 1) * SPitch) // 2
+yoff = -(((NstCol) - 1) * Slength) // 2
+pref = point(xoff, yoff)
+poff = point(xoff + SPitch, yoff + Slength)
+e = Bump_125.addCellrefArray(M23V23Z, pref, poff, NstRow//2, NstCol)
+#
+#   Staggered pads
+#
+e = Bump_125_stgr.addCellref(M23V23Z, point(0, -ST_CA_Pitch))
+e = Bump_125_stgr.addCellref(M23V23Z, point(SPitch, ST_CA_Pitch))
+pref = point(SPitch//2, yoff)
+poff = point(SPitch//2 + SPitch*2 , yoff + Slength)
+e = Bump_125.addCellrefArray(Bump_125_stgr, pref, poff, NstRow//4, NstCol)
+stcell = l.drawing.findCell(Strip_name[indx_125] + "_Arr")
+e = stcell.addCellref(Bump_125, point(0, 0))
 
 #		padArray(cc, cp, int(nstrip//2)-1, xoff+spitch, spitch*2, -(endpt-endoffset), smwidth//2)
 ##############################################
@@ -921,11 +941,9 @@ print(CellList)
 from pathlib import Path
 home_directory = Path.home()
 #print(home_directory)
-gdsversion = "18.1"
+gdsversion = "18.2"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 #print(gdsfile)
 l.drawing.saveFile(gdsfile)
 
 print("Python script completed")
-
-
