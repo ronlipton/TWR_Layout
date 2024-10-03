@@ -2,6 +2,17 @@
 from LayoutScript import *
 from pprint import pprint
 def BoxDraw(c,xgr,ygr,radius,whigh,wlow, layer):
+#
+#       Draw Top, bottom, left, right boxes to enclosure a pixel or strip area
+#   ie y of top =- ygr(0) + radius + whigh ...
+#   c - target cell
+#   xgr - x values (4) of guide box
+#   ygr - y values of guide box
+#   radius - radius of offset reference
+#   whigh - high offset of box from radius
+#   wlow - low offset from radius
+#   layer - drawing layer
+#
     ind = [0,1,2,3,0]
     for  j in range(4):
         pa = pointArray()
@@ -69,7 +80,9 @@ def erdraw(c, xgr, ygr, wlow, whigh, layer, radius):
     #		wlow - low offset from reference
     #		whigh - high offset from reference
     #
+    #   Uses boxdraw to draw enclosing horrizontal and vertical sides
     angle = 0
+    #   edge polygons
     for ind in range(len(xgr)):
         #    horiz = bool(True)
         x = xgr[ind]
@@ -254,6 +267,50 @@ def Make_M1M2_Mesh(Prefix, Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, CA_Pitch, 
         e = cd.addCellref(M2Str, point(0, ypoints[k] + CA_Pitch // 2))
     return cd
 
+def Make_M1M2M3_Mesh(Prefix, Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, CA_Pitch, CA, Via_list):
+    #
+    #   Make mesh contact with Metal 1,2 and 3
+    V1 = Via_list[0]
+    V2 = Via_list[1]
+    cd = NewCell(Prefix + "_M1M2M3_Mesh")
+    M1Str = NewCell(Prefix + "_M1_strip")
+    e = M1Str.addBox(-Pad_Widths[0], -Len_XY[1] // 2, 2 * Pad_Widths[0], Len_XY[1], Pad_Layers[0])
+    ypoints = Space_1d(Len_XY[1], CA_Pitch)
+    for k in range(len(ypoints)):
+        e = M1Str.addCellref(CA, point(0, ypoints[k]))
+    M1_strips = Space_1d(Len_XY[0], M12_Pitch[0])
+    for k in range(len(M1_strips)):
+        e = cd.addCellref(M1Str, point(M1_strips[k], 0))
+
+    #  Metal two connection
+    M2Str = NewCell(Prefix + "_M2_Strip")
+    e = M2Str.addBox(-Len_XY[0] // 2, -Pad_Widths[1], Len_XY[0], 2 * Pad_Widths[1], M2)
+    for k in range(len(M1_strips)):
+        e = M2Str.addCellref(V1, point(M1_strips[k], 0))
+    for k in range(len(ypoints) - 1):
+        e = cd.addCellref(M2Str, point(0, ypoints[k] + CA_Pitch // 2))
+
+        # Metal 3 connection
+    M3Str = NewCell(Prefix + "_M3_Strip")
+    e = M3Str.addBox(-Len_XY[0] // 2, -Pad_Widths[2], Len_XY[0], 2 * Pad_Widths[2], M3)
+    for k in range(len(M1_strips)):
+        e = M3Str.addCellref(V2, point(M1_strips[k], 0))
+    for k in range(len(ypoints) - 1):
+        e = cd.addCellref(M3Str, point(0, ypoints[k] + CA_Pitch // 2))
+    return cd
+
+
+def Place_Pad(cd, Name, SXY_Active, SPitch, Slength ):
+    astr = NewCell(Name + "_Arr")
+    #	Strip_Arrays.append(Strip_name[i] + "_Arr")
+    NstX = SXY_Active // SPitch
+    NstY = SXY_Active // Slength
+    xoff = -(((NstX) - 1) * SPitch) // 2  # bottom left
+    yoff = -(((NstY) - 1) * Slength) // 2  # bottom left
+    pref = point(xoff, yoff)
+    poff = point(xoff + SPitch, yoff + Slength)
+    e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
+    return astr
 
 import LayoutScript
 from LayoutScript import *
@@ -270,13 +327,20 @@ setup.defaultTextWidth = 200000
 SetUp = setup()  # work around as static string variables are not handled correctly
 # Layer definitions
 
+#
+#   Import SLAC portions
+#
+dr.importFile("/Users/ronlipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v3.gds")
+
 OTL = 0  # outline for drawing
-JTE = 116  # Junction termination extension (NP)
+OD = 1
+JTE = 116  # Junction termination extension (NP-JTE)
 PGN = 117  # boron gain layer (NC)
 ACN = 55  # AC phos layer (NQ)
-OX = 58  # oxide openings (ZP)
+#  OX = 58  # oxide openings (ZP)
 ZP = 58  # top passivation openings
 NPL = 66  # n+ (NP)
+NP = 66
 MET = 44  # original design Metal
 M1 = 43  # METAL 1
 M2 = 47  # Metal 2
@@ -287,13 +351,15 @@ ZG = 56  # Hole to connect ZA to M3
 ZA = 57  # 4th Metal (Al,Top Metal)
 CON = 25  # Contact (CA)
 CA = 25  # contact
-ACC = 9
+# ACC = 9
 DJP = 18  # Deep junction p (PX)
 DJN = 16  # Deep junction n (DW?)
 PSB = 21  # p substrate contact (PG??)
 PST = 117  # p stop (NC)
 ND = 19 # n contact
 
+# inset of active
+OD_inset = 100
 # Number of guard rings
 nrings = 5
 # Device pixel pitches
@@ -390,14 +456,20 @@ ml.addBox(-CA_Width, -CA_Width, 2 * CA_Width, 2 * CA_Width, CA)
 CA4x4 = NewCell("Contact_4x4")
 e = CA4x4.addCellrefArray(ml, point(-CA_Space // 2, -CA_Space // 2), point(CA_Space // 2, CA_Space // 2), 2, 2)
 e = CA4x4.addCellref(M1Pad, point(0, 0))
-
-CAP4x4 = NewCell("PContact")
-e = CAP4x4.addCellrefArray(ml, point(-CA_Space // 2, -CA_Space // 2), point(CA_Space // 2, CA_Space // 2), 2, 2)
-
 #  Add ohmic n contact region for CA cell
-CA4x4.addBox(-M1_Width_2, -M1_Width_2, M1_Width, M1_Width, ND)
-# Ohmic p contact
-#CAP4x4.addBox(-M1_Width_2, -M1_Width_2, M1_Width, M1_Width, PSB)
+CA4x4.addBox(-M1_Width_2+1, -M1_Width_2+1, M1_Width-2, M1_Width-2, ND)
+CA4x4.addBox(-M1_Width_2+1+OD_inset, -M1_Width_2+1+OD_inset, M1_Width-2-2*OD_inset, M1_Width-2-2*OD_inset, OD)
+#   Distinguish p and n
+CAN4x4 = CA4x4
+
+
+CAP4x4 = NewCell("PContact_4x4")
+e = CAP4x4.addCellrefArray(ml, point(-CA_Space // 2, -CA_Space // 2), point(CA_Space // 2, CA_Space // 2), 2, 2)
+e = CAP4x4.addCellref(M1Pad, point(0, 0))
+#  Add ohmic n contact region for CA cell
+CAP4x4.addBox(-M1_Width_2+1, -M1_Width_2+1, M1_Width-2, M1_Width-2, NP)
+CAP4x4.addBox(-M1_Width_2+1+OD_inset, -M1_Width_2+1+OD_inset, M1_Width-2-2*OD_inset, M1_Width-2-2*OD_inset, OD)
+#   Distinguish p and n
 
 #  Via Cell list
 Via_List = []
@@ -412,43 +484,46 @@ for i in range(len(Via_Cells)):
         Via_List.append(ml)
     else:
         Via_List.append(ml4x4)
+#    print(Via_List[i])
 
-# Small Bond Pad -top
-cpadl = l.drawing.addCell()
-cpadl.thisCell.cellName = "Bond_Pad_small"
-cp = cpadl.thisCell
-spadWidth = 300000
-spadLength = 70000
-oxinset = 5000
-e = adddrBox(cp, (-spadLength + oxinset) // 2, (-spadWidth + oxinset) // 2, spadLength - oxinset, spadWidth - oxinset,
-             5000, OX)
-e = adddrBox(cp, -spadLength // 2, -spadWidth // 2, spadLength, spadWidth, 5000, ZA)
+BP_M3_Via_80 = NewCell("BP_M3_via80")
+BPM3Width = 73000
+BPM3Length = 3000
+e = adddrBox(BP_M3_Via_80, -BPM3Width//2, -BPM3Length//2, BPM3Width, BPM3Length, 0, ZG)
+BP_M3_Via_60 = NewCell("BP_M3_via60")
+BPM3Width = 42000
+BPM3Length = 3000
+e = adddrBox(BP_M3_Via_60, -BPM3Width//2, -BPM3Length//2, BPM3Width, BPM3Length, 0, ZG)
 
-# Small Bond Pad bottom
-cpadl = l.drawing.addCell()
-cpadl.thisCell.cellName = "Bond_Pad_small_bot"
-cp = cpadl.thisCell
-oxinset = 5000
-e = adddrBox(cp, (-spadLength + oxinset) // 2, (-spadWidth + oxinset) // 2, spadLength - oxinset, spadWidth - oxinset,
-             5000, OX)
-e = adddrBox(cp, -spadLength // 2, -spadWidth // 2, spadLength, spadWidth, 5000, ZA)
+# 80 micron bond pad
+BP_80 = NewCell("Bond_Pad_80")
+padWidth_80 = 77000
+padLength_80 = 205000
+OXLength_80 = 190000
+OXWidth_80 = 71000
+e = adddrBox(BP_80, -OXWidth_80// 2, -OXLength_80//2, OXWidth_80, OXLength_80, 0, ZA)
+e = adddrBox(BP_80, -padWidth_80 // 2, -padLength_80 // 2, padWidth_80, padLength_80, 0, ZP)
+e = BP_80.addCellref(BP_M3_Via_80, point(0, padLength_80//2-2500))
+e = BP_80.addCellref(BP_M3_Via_80, point(0, -padLength_80//2+2500))
 
-# Short Bond Pad
-cpadl = l.drawing.addCell()
-cpadl.thisCell.cellName = "Bond_Pad_short"
-cp = cpadl.thisCell
-spadWidth = 200000
-spadLength = 70000
-oxinset = 5000
-e = adddrBox(cp, (-spadLength + oxinset) // 2, (-spadWidth + oxinset) // 2, spadLength - oxinset, spadWidth - oxinset,
-             5000, OX)
-e = adddrBox(cp, -spadLength // 2, -spadWidth // 2, spadLength, spadWidth, 5000, ZA)
+#  60 micron bond pad
+BP_60 = NewCell("Bond_Pad_60")
+padWidth_60 = 57000
+padLength_60 = 205000
+OXLength_60 = 190000
+OXWidth_60 = 51000
+e = adddrBox(BP_60, -OXWidth_60// 2, -OXLength_60//2, OXWidth_60, OXLength_60, 0, ZA)
+e = adddrBox(BP_60, -padWidth_60 // 2, -padLength_60 // 2, padWidth_60, padLength_60, 0, ZP)
+e = BP_60.addCellref(BP_M3_Via_60, point(0, padLength_60//2-2500))
+e = BP_60.addCellref(BP_M3_Via_60, point(0, -padLength_60//2+2500))
+
 #   Bump Pad_Cell
 BCell = NewCell("BumpPad")
-DrawBump(BCell, 4000, ZA)  # Standard bump pad - check dimensions
-DrawBump(BCell, 3500, OX)
+DrawBump(BCell, 8300, ZA)  # Standard bump pad - check dimensions
+DrawBump(BCell, 6500, ZP)
 
-# Metal-Via stack for pads
+
+# Metal-Via stack for pads not including CA
 M23V23Z = NewCell("M1M2V1V2ZG_Pad")
 for Layer in range(3):
     M23V23Z.addCellref(Pad_List[Layer], point(0, 0))
@@ -475,9 +550,14 @@ CA_Contact = l.drawing.findCell("Contact_4x4")
 ##############################################
 #  make DC strxcel
 #  def makeStrip(cl, activeLength, sgap, siwidth, scwidth, moffs, LP, LM, LC):
+#
+#   Active dimensions for 3x3 strip arrays
+#
+Str_Length = 2000000
+Str_Length_2 = Str_Length//2
 empty_cell = NewCell("empty")
 Strip_Pitch = [12500, 50000, 100000, 50000, 100000]
-Strip_Length = [50000, 2 * Length_2, 2 * Length_2, 2 * Length_2, 2 * Length_2]
+Strip_Length = [50000, Str_Length, Str_Length, Str_Length, Str_Length]
 Strip_name = ["Strp125", "Strp50", "Strp100", "AC50","AC100"]
 Strip_Contacty = ["Strp125CY", "Strp50CY", "Strp100CY", "Strp50CY", "Strp100CY"]
 ConCell = [CA_Contact, CA_Contact, CA_Contact, empty_cell, empty_cell]
@@ -489,6 +569,8 @@ STInset = 5000  # Strip implant inset from edge
 ST_CA_Pitch = 10000  # Strip contact pitch
 ST_M1_Pitch = 2000  # strip M1 contact strip Pitch
 SXY_Active = 5000000
+STXY_Active = 2000000
+offset_3mm = 1500000
 Strip_imp_width = []
 Strip_Arrays = []
 
@@ -525,8 +607,10 @@ for i in range(len(Strip_Pitch)):
 #   mesh subroutine
     Met_Pitch = [ST_CA_Pitch//5, ST_M1_Pitch]
     lxy = [siwidth, lng]
-    ce = Make_M1M2_Mesh(Strip_name[i], Pad_Layers, Pad_Widths, Met_Pitch, lxy, ST_CA_Pitch, ConCell[i], Via_List[1] )
+#   ce = Make_M1M2_Mesh(Strip_name[i], Pad_Layers, Pad_Widths, Met_Pitch, lxy, ST_CA_Pitch, ConCell[i], Via_List[1] )
+    ce = Make_M1M2M3_Mesh(Strip_name[i], Pad_Layers, Pad_Widths, Met_Pitch, lxy, ST_CA_Pitch, ConCell[i], Via_List)
     cd.addCellref(ce, point(0, 0))
+
 
 # P-stop for DC coupled
     if Strip_name[i][0:2] == 'AC':
@@ -541,20 +625,69 @@ for i in range(len(Strip_Pitch)):
         yps = [pslen, pslen, -pslen, -pslen]
         erdraw(cd, xps, yps, pswidth, 0, PST, rad)
 
-    #
-    #   Add Cellrefarray here
-    #
+    #      Add bond pads
+    BPinset = 255000
+    Row2inset = BPinset + 260000
+    if (SPitch == 100000):
+        cd.addCellref(BP_80, point(0, Slength // 2 - BPinset))
+        cd.addCellref(BP_80, point(0, -Slength // 2 + BPinset))
 
-    astr = NewCell(Strip_name[i] + "_Arr")
-    Strip_Arrays.append(Strip_name[i] + "_Arr")
-    NstRow = SXY_Active // SPitch
-    NstCol = SXY_Active // Slength
-    xoff = -(((NstRow) - 1) * SPitch) // 2
-    yoff = -(((NstCol) - 1) * Slength) // 2
-    pref = point(xoff, yoff)
-    poff = point(xoff + SPitch, yoff + Slength)
-    e = astr.addCellrefArray(cd, pref, poff, NstRow, NstCol)
+        bstr = NewCell(Strip_name[i] + "_Arr")
+        Strip_Arrays.append(Strip_name[i] + "_Arr")
 
+        astr = NewCell(Strip_name[i] + "_Arr3mm")
+        NstX = STXY_Active // SPitch
+        NstY = STXY_Active // Slength
+        xoff = -(((NstX) - 1) * SPitch) // 2  # bottom left
+        yoff = -(((NstY) - 1) * Slength) // 2  # bottom left
+        pref = point(xoff, yoff)
+        poff = point(xoff + SPitch, yoff + Slength)
+        e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
+
+        pref = point(-offset_3mm, -offset_3mm)
+        poff = point(offset_3mm, offset_3mm)
+        bstr.addCellrefArray(astr, pref, poff, 2, 2)
+
+    if (SPitch == 50000):
+    #   make two copies of strip for staggered pads
+        dr.setCell(DCStripn)
+        dr.selectAll()
+        dr.point(-25000,0)
+        dr.move()
+        dr.point(50000,0)
+        dr.copy()
+        cd.addCellref(BP_60, point(-25000, Slength // 2 - BPinset))
+        cd.addCellref(BP_60, point(-25000, -Slength // 2 + BPinset))
+        cd.addCellref(BP_60, point(25000, Slength // 2 - Row2inset))
+        cd.addCellref(BP_60, point(25000, -Slength // 2 + Row2inset))
+
+        bstr = NewCell(Strip_name[i] + "_Arr")
+        Strip_Arrays.append(Strip_name[i] + "_Arr")
+
+        astr = NewCell(Strip_name[i] + "_Arr3mm")
+        NstX = STXY_Active // (SPitch*2)
+        NstY = STXY_Active // Slength
+        xoff = -(((NstX) - 1) * (SPitch*2)) // 2    # bottom left
+        yoff = -(((NstY) - 1) * Slength) // 2    # bottom left
+        pref = point(xoff, yoff)
+        poff = point(xoff + (SPitch*2), yoff + Slength)
+        e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
+
+        pref = point(-offset_3mm, -offset_3mm)
+        poff = point(offset_3mm, offset_3mm)
+        bstr.addCellrefArray(astr, pref, poff, 2, 2)
+
+
+    if (SPitch == 12500):
+        astr = NewCell(Strip_name[i] + "_Arr")
+        Strip_Arrays.append(Strip_name[i] + "_Arr")
+        NstX = SXY_Active // SPitch
+        NstY = SXY_Active // Slength
+        xoff = -(((NstX) - 1) * SPitch) // 2  # bottom left
+        yoff = -(((NstY) - 1) * Slength) // 2  # bottom left
+        pref = point(xoff, yoff)
+        poff = point(xoff + SPitch, yoff + Slength)
+        e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
 
 #
 #   Stqggered 125 um bump array cell
@@ -562,28 +695,33 @@ for i in range(len(Strip_Pitch)):
 #
 indx_125 = 0
 Bump_125 = NewCell("Bump_125_Arr")
-Bump_125_stgr = NewCell("Bump_125_Stg")  # staggered bumps
+# Bump_125_stgr = NewCell("Bump_125_Stg")  # staggered bumps
 SPitch = Strip_Pitch[indx_125]
 Slength = Strip_Length[indx_125]
-NstRow = SXY_Active // SPitch
-NstCol = SXY_Active // Slength
-xoff = -(((NstRow) - 1) * SPitch) // 2
-yoff = -(((NstCol) - 1) * Slength) // 2
-pref = point(xoff, yoff)
-poff = point(xoff + SPitch, yoff + Slength)
-e = Bump_125.addCellrefArray(M23V23Z, pref, poff, NstRow//2, NstCol)
+NstX = SXY_Active // SPitch
+NstY = SXY_Active // Slength
+xoff = -(((NstX) - 1) * SPitch) // 2
+yoff = -(((NstY) - 1) * Slength) // 2
+# pref = point(xoff, yoff)
+# poff = point(xoff + SPitch, yoff + Slength)
+# e = Bump_125.addCellrefArray(M23V23Z, pref, poff, NstX//2, NstY)
 #
-#   Staggered pads
+#   Staggered pad section - MAKE IT ALL STAGGERED 9/27/24
 #
-e = Bump_125_stgr.addCellref(M23V23Z, point(0, -ST_CA_Pitch))
-e = Bump_125_stgr.addCellref(M23V23Z, point(SPitch, ST_CA_Pitch))
-pref = point(SPitch//2, yoff)
-poff = point(SPitch//2 + SPitch*2 , yoff + Slength)
-e = Bump_125.addCellrefArray(Bump_125_stgr, pref, poff, NstRow//4, NstCol)
-stcell = l.drawing.findCell(Strip_name[indx_125] + "_Arr")
-e = stcell.addCellref(Bump_125, point(0, 0))
+# Lower pad
+# pref = point(SPitch//2, yoff-ST_CA_Pitch)
+pref = point(xoff, yoff-ST_CA_Pitch)
+# poff = point(SPitch//2 + SPitch*2 , yoff + Slength - ST_CA_Pitch)
+poff = point(xoff + SPitch*2, yoff + Slength - ST_CA_Pitch)
+e = Bump_125.addCellrefArray(M23V23Z, pref, poff, NstX//2, NstY)
+# upper pad
+pref = point(xoff + SPitch, yoff+ST_CA_Pitch)
+poff = point(xoff + SPitch*3 , yoff + Slength + ST_CA_Pitch)
+e = Bump_125.addCellrefArray(M23V23Z, pref, poff, NstX//2, NstY)
 
-#		padArray(cc, cp, int(nstrip//2)-1, xoff+spitch, spitch*2, -(endpt-endoffset), smwidth//2)
+st125cell = l.drawing.findCell(Strip_name[indx_125] + "_Arr")
+e = st125cell.addCellref(Bump_125, point(0, 0))
+
 ##############################################
 #
 #  DJ Pixel
@@ -618,7 +756,8 @@ for i in range(len(Pitch)):
     #  Mesh Contact
     Len_XY = [Pitch[i] - DJInset, Pitch[i] - DJInset]
     M12_Pitch = [2 * M1_Width, 2 * M2_Width]
-    Ref = Make_M1M2_Mesh(DJName[i], Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List[0])
+#    Ref = Make_M1M2_Mesh(DJName[i], Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List[0])
+    Ref = Make_M1M2M3_Mesh(DJName[i], Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List)
     e = cpad.addCellref(Ref, point(0, 0))
     e = cpad.addCellref(M23V23Z, point(0, 0))  # bump in cell  center
     xpm = lng//2 - DJInset//2
@@ -632,7 +771,7 @@ for i in range(len(Pitch)):
     ym = [xpm, xpm, -xpm, -xpm]
     erdraw(cpad, xm, ym, DJIWid_2, 0, PST, 0)
     #
-    #
+    #2
     apad = NewCell(DJAName[i])
 
     xoff = -(((NPXRow[i]) - 1) * Pitch[i]) // 2
@@ -684,30 +823,18 @@ xm = [xpm, -xpm, -xpm, xpm]
 ym = [xpm, xpm, -xpm, -xpm]
 erdraw(rtpad, xm, ym, JTEInset, JTEWidth, JTE, RTRound)
 
-#		Add RTMetal Array
-RTM1 = NewCell("RT_M1")
-RT_Pad_len = lng // 2 - RTPad_inset
-RTM1.addBox(-M1_Width_2, -RT_Pad_len, M1_Width, 2 * RT_Pad_len, M1)
-ypoints = Space_1d(2 * RT_Pad_len, ST_CA_Pitch)
-for k in range(len(ypoints)):
-    e = RTM1.addCellref(CA_Contact, point(0, ypoints[k]))
-xpoints = Space_1d(2 * RT_Pad_len, ST_M1_Pitch)
+RT_Pad_len = lng - 20000
 #
+#   Add contact mesh
 #
-for k in range(len(xpoints)):
-    e = rtpad.addCellref(RTM1, point(xpoints[k], 0))
-RT_M1_Lines.append(xpoints)
-
-RT_M2 = NewCell("RT_M2")
-e = RT_M2.addBox(-RT_Pad_len, -M2_Width_2, 2 * RT_Pad_len, M2_Width, M2)
-# Test_ypoints = Space_1d(2*RT_Pad_len, RT_M2_Pitch)
-for k in range(len(xpoints)):
-    e = RT_M2.addCellref(Via_List[0], point(xpoints[k], 0))
-for k in range(len(ypoints) - 1):
-    e = rtpad.addCellref(RT_M2, point(0, ypoints[k] + ST_CA_Pitch // 2))
-
-
+Len_XY = [RT_Pad_len, RT_Pad_len]
+Ref = Make_M1M2M3_Mesh("RT", Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List)
+rtpad.addCellref(Ref, point(0, 0))
 wbox = RTPitchx // 2 - RTRound - PIWid_2
+
+# Pad at center
+rtpad.addCellref(BP_80, point(0,0))
+
 xpm = wbox
 xm = [xpm, -xpm, -xpm, xpm]
 ym = [xpm, xpm, -xpm, -xpm]
@@ -727,8 +854,8 @@ e = RTpad.addCellrefArray(rtpad, pref, poff, RTRow, RTCol)
 ##############################################
 # AC Pads
 # metal dimensions
-ACMetx = [20000, 40000]  # 50 and 100 micron pad size
-ACMety = [20000, 40000]
+ACMetx = [30000, 60000]  # 50 and 100 micron pad size
+ACMety = [30000, 60000]
 ACPitch_M1X = [2000, 2000]  # metal pitch (for 50% coverage)
 ACPitch_M2Y = [8000, 8000]
 # M1_Strips = []
@@ -737,21 +864,11 @@ name = ["ACPad_50", "ACPad_100"]
 aname = ["AC_Array_50", "AC_Array_100"]
 
 for i in range(len(ACMetx)):
-    cpad = NewCell(name[i] + "_M1_Strip")
-    e = cpad.addBox(-M1_Width_2, -ACMety[i] // 2, M1_Width, ACMety[i], M1)
-    M1_strips = Space_1d(ACMetx[i], ACPitch_M1X[i])
     cd = NewCell(name[i])
-    for k in range(len(M1_strips)):
-        e = cd.addCellref(cpad, point(M1_strips[k], 0))
-    #  Metal two connection
-    m2pad = NewCell(name[i] + "_M2_Strip")
-    e = m2pad.addBox(-ACMety[i] // 2, -M2_Width_2, ACMety[i], M2_Width, M2)
-    for k in range(len(M1_strips)):
-        e = m2pad.addCellref(Via_List[0], point(M1_strips[k], 0))
-    M2_Strips = Space_1d(ACMety[i], ACPitch_M2Y[i])
-    #	print(M2_Strips)
-    for k in range(len(M2_Strips)):
-        e = cd.addCellref(m2pad, point(0, M2_Strips[k]))
+    Len_XY = [ACMetx[i], ACMety[i]]
+#    print("Lenxy=",Len_XY)
+    Ref = Make_M1M2M3_Mesh(name[i], Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List)
+    cd.addCellref(Ref, point(0, 0))
 
     # Outline
     x = -Pitch[i] // 2
@@ -766,6 +883,7 @@ for i in range(len(ACMetx)):
     pref = point(xoff, yoff)
     poff = point(xoff + Pitch[i], yoff + Pitch[i])
     e = apad.addCellrefArray(cd, pref, poff, NPXRow[i], NPXCol[i])
+    e = cd.addCellref(M23V23Z, point(0, 0))
 
 # Gain Layer
 name = "Gain_Layer"
@@ -854,27 +972,27 @@ CellList = []
 #	 AC LGAD Cells
 #
 # ACL_list = ["Assy_AC_", "Assy_AC_"]
+Border_List = ["6mm_50um_pitch_bumps","6mm_100um_pitch_bumps"]
 AC_Type = ["50", "100"]
 for i in range(len(AC_Type)):
     cname = "Assy_AC_" + AC_Type[i]
     Assy_AC = NewCell(cname)
     ACPName = "AC_Array_" + AC_Type[i]
     #	print(ACPName)
-    clist = ["AC_Layer", ACPName, cotl, "JTE", "PSubC", "Gain_Layer"]
+    clist = ["AC_Layer", ACPName, cotl, "JTE", "PSubC", "Gain_Layer",Border_List[i]]
     makeAssy(Assy_AC, clist)
     CellList.append(cname)
 
 #
 #	 DJ LGAD Cells
 #
-
 DJ_Type = ["50", "100"]
 for i in range(len(DJ_Type)):
     cname = "DJAssy_" + DJ_Type[i]
     Assy_DJ = NewCell(cname)
     DJPName = "DJA_" + DJ_Type[i]
     #	print(DJPName)
-    clist = [DJPName, cotl, "JTE", "PSubC", "DJ_N", "DJ_P"]
+    clist = [DJPName, cotl, "JTE", "PSubC", "DJ_N", "DJ_P",Border_List[i]]
     makeAssy(Assy_DJ, clist)
     CellList.append(cname)
 
@@ -883,27 +1001,27 @@ for i in range(len(AC_Type)):
     cname = "ACAssy_Str" + AC_Type[i]
     Assy_AC = NewCell(cname)
     ACCName = "AC" +AC_Type[i]+"_Arr"
-    clist = ["AC_Layer", ACCName, cotl, "JTE", "PSubC", "Gain_Layer"]
+    clist = ["AC_Layer", ACCName, cotl, "JTE", "PSubC", "Gain_Layer","3mm_quad"]
     makeAssy(Assy_AC, clist)
     CellList.append(cname)
 
 cnam = "RTAssy"
 RTAss = NewCell(cnam)
-clist = (RTCname, "PSubC")
+clist = (RTCname, "PSubC","6mm_with_pads")
 makeAssy(RTAss, clist)
 CellList.append(cnam)
 
 for i in range(3):
     cname = Strip_Arrays[i] + "_Assy"
     STX_Ass = NewCell(cname)
-    clist = ("PSubC", Strip_Arrays[i])
+    clist = ("PSubC", Strip_Arrays[i],"3mm_quad")
     makeAssy(STX_Ass, clist)
     CellList.append(cname)
     #
     #	DJ Version
     cname = Strip_Arrays[i] + "_DJAssy"
     STDJ_Ass = NewCell(cname)
-    clist = ("PSubC", Strip_Arrays[i], "JTE", "DJ_N", "DJ_P")
+    clist = ("PSubC", Strip_Arrays[i], "JTE", "DJ_N", "DJ_P","3mm_quad")
     makeAssy(STDJ_Ass, clist)
     CellList.append(cname)
 
@@ -941,7 +1059,7 @@ print(CellList)
 from pathlib import Path
 home_directory = Path.home()
 #print(home_directory)
-gdsversion = "18.2"
+gdsversion = "19.0"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 #print(gdsfile)
 l.drawing.saveFile(gdsfile)
