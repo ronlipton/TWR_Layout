@@ -165,6 +165,7 @@ def drcorner(xarr, yarr, npts, layer):
 def makeAssy(cel, celllist):
     #
     #  make an assembly of multiple cells, all at 0,0
+    #  names contained in celllist
     #
     for ind in range(len(celllist)):
         cnew = l.drawing.findCell(clist[ind])
@@ -362,7 +363,7 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #
 #   Import SLAC portions
 #
-dr.importFile("/Users/ronlipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v3.gds")
+dr.importFile("/Users/ronlipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v6.gds")
 
 OTL = 0  # outline for drawing
 OD = 1 # Defines active window
@@ -386,7 +387,8 @@ CA = 25  # contact
 # ACC = 9
 DJP = 18  # Deep junction p IMPLANT (PX)
 DJN = 16  # Deep junction n IMPLANT (DW?)
-PSB = 21  # p substrate contact IMPLANT (PG??)
+PSB = 21  # p substrate contact IMPLANT (PD??)
+PD = 21
 # PST = 117  # p stop (NC)
 ND = 19 # n contact IMPLANT
 PW = 78 # P-well IMPLANT
@@ -615,6 +617,7 @@ gsurr = 10000
 DJNinset = 15000  # inset of deep N (phos) from active length
 DJPinset = 5000  # inset of deep P (Boron) from active length
 DJRound = 5000  # edge rounding radius
+DJRound = 2000  # edge rounding radius
 DJInset = 10000
 
 
@@ -636,7 +639,7 @@ bstr.addCellrefArray(cpad, pref, poff, 2, 2)
 bstr.addCellrefArray(dpad, pref, poff, 2, 2)
 
 gainsurr = 40000  # gain surround of AC
-gainround = 25000  # radius of reference arc for GR edges
+gainround = 5000  # radius of reference arc for GR edges
 gsurr = 10000
 #  AC gain and casthode implants
 name = "ACP_3mm"
@@ -651,14 +654,18 @@ wbox = (activeLength + gainsurr) // 2
 bpad = NewCell(name)
 e = adddrBoxOD(bpad, -(activeLength + gainsurr) // 2, -(activeLength + gainsurr) // 2, \
                  activeLength + gainsurr, activeLength + gainsurr, gainround, ACN, OD, OD_inset)
-# JTE
+# Draw JTE for 3mm
 cjte_AC = NewCell("JTE_3mm")
 wbox = (activeLength + gainsurr) // 2 -JTERound
-wbox = (activeLength + gainsurr) // 2 -gainround -10000
+wbox = (activeLength + gainsurr) // 2 -gainround -2500
 xpm = wbox
 xm = [xpm, -xpm, -xpm, xpm]
 ym = [xpm, xpm, -xpm, -xpm]
+# erdrawOD(cjte_AC, xm, ym, JTEInset - 2000, JTEWidth, JTE, JTERound, OD, OD_inset)
 erdrawOD(cjte_AC, xm, ym, JTEInset - 2000, JTEWidth, JTE, JTERound, OD, OD_inset)
+#  Add ND
+# erdrawOD(cjte_AC, xm, ym, JTEInset - 2000, JTEWidth, ND, JTERound, OD, OD_inset)
+erdrawOD(cjte_AC, xm, ym, JTEInset - 2000, JTEWidth, ND, JTERound, OD, OD_inset)
 
 name = "ACP_3mm_2x2"
 bstr = NewCell(name)
@@ -824,21 +831,18 @@ e = st125cell.addCellref(Bump_125, point(0, 0))
 #
 DJName = ["DJ_50", "DJ_100"]
 DJAName = ["DJA_50", "DJA_100"]
-# DJConRad = 2000 # contact radius
-# DJOXRad = 6000 # radius of oxide opening
 DJMRad = 22000  # Radius of m1 layer
 DJMSur = 5000  # 2 x metal surround of implant
 
 ## moff = 80000  # for strips
 DJIWid_2 = 500
 DJM2_Wid_2 = 1000
-
 Len_XY = [Pitch[0] - DJInset, Pitch[0] - DJInset]
 M12_Pitch = [2 * M1_Width, 2 * M2_Width]
 
 for i in range(len(Pitch)):
 
-    cpad = NewCell(DJName[i] + "noPS")
+    cpad = NewCell(DJName[i] + "Base")
     lng = Pitch[i] - DJInset
     e = adddrBoxOD(cpad, -lng // 2, -lng // 2, lng, lng, DJRound, NPL, OD, OD_inset)
     crad = 12000
@@ -848,20 +852,26 @@ for i in range(len(Pitch)):
 #    Ref = Make_M1M2_Mesh(DJName[i], Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List[0])
     Ref = Make_M1M2M3_Mesh(DJName[i], Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List)
     e = cpad.addCellref(Ref, point(0, 0))
-    e = cpad.addCellref(M23V23Z, point(0, 0))  # bump in cell  center
-    xpm = lng//2 - DJInset//2
+
+#    xpm = lng//2 - DJInset//2
+    xpm = lng//2 - DJRound
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
-    erdraw(cpad, xm, ym, DJM2_Wid_2, DJM2_Wid_2, M2, DJInset//2)
-    # save version with no p-stop
-    dpad = NewCell(DJName[i])
-    e = dpad.addCellref(cpad, point(0, 0))
+    erdraw(cpad, xm, ym, DJM2_Wid_2, DJM2_Wid_2, M2, DJRound)
     # Add isolation - assume square
     wbox = Pitch[i] // 2
     xpm = wbox
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
-    erdrawOD(dpad, xm, ym, DJIWid_2, 0, PW, 0, OD, OD_inset)
+    erdrawOD(cpad, xm, ym, DJIWid_2, 0, PW, 0, OD, OD_inset)
+# cell without central bump
+    dpad = NewCell(DJName[i]+"_NoBump")
+    e = dpad.addCellref(cpad, point(0, 0))
+# cell with bump
+    epad = NewCell(DJName[i])
+    e = epad.addCellref(cpad, point(0, 0))
+
+    e = epad.addCellref(M23V23Z, point(0, 0))  # bump in cell  center
     #
     # pixel array cell
     apad = NewCell(DJAName[i])
@@ -869,22 +879,25 @@ for i in range(len(Pitch)):
     yoff = -(((NPXCol[i]) - 1) * Pitch[i]) // 2
     pref = point(xoff, yoff)
     poff = point(xoff + Pitch[i], yoff + Pitch[i])
-    e = apad.addCellrefArray(dpad, pref, poff, NPXRow[i], NPXCol[i])
+    e = apad.addCellrefArray(epad, pref, poff, NPXRow[i], NPXCol[i])
+
+    fpad = NewCell(DJAName[i] + "_noBump")
+    e = fpad.addCellrefArray(dpad, pref, poff, NPXRow[i], NPXCol[i])
 #    epad = NewCell("Edge_Array")
-    Edge_Cell = DJName[i] + "_Edge"
-    print(Edge_Cell)
-    dcell = make_EdgeArray(Edge_Cell, dpad, cpad, NPXRow[i], NPXCol[i], Pitch[i], Pitch[i])
-    # for some reason this results in duplicate cells?
+#    Edge_Cell = DJName[i] + "_Edge"
+#    print(Edge_Cell)
+#    dcell = make_EdgeArray(Edge_Cell, dpad, cpad, NPXRow[i], NPXCol[i], Pitch[i], Pitch[i])
 
 # DJ Implants
 name = "DJ_PN"
 activeLength = Lng
 cpad = NewCell(name)
-dinset = 18000
+dinset = 1500
 rinset = dinset
 djcorner = activeLength + DJPinset
 e = adddrBoxOD(cpad, -(djcorner) // 2, -(djcorner) // 2, \
              djcorner, djcorner, DJRound+dinset, DJP, OD, OD_inset)
+
 djcorner = activeLength + DJNinset
 e = adddrBoxOD(cpad, -(djcorner) // 2, -(djcorner) // 2, \
              djcorner, djcorner, DJRound+dinset+3500, DJN, OD, OD_inset)
@@ -917,6 +930,7 @@ xpm = wbox
 xm = [xpm, -xpm, -xpm, xpm]
 ym = [xpm, xpm, -xpm, -xpm]
 erdrawOD(rtpad, xm, ym, JTEInset, JTEWidth, JTE, RTRound, OD, OD_inset)
+erdrawOD(rtpad, xm, ym, JTEInset, JTEWidth, JTE, RTRound, ND, OD_inset)
 # erdraw(rtpad, xm, ym, JTEInset-OD_inset, JTEWidth-OD_inset, OD, RTRound)
 
 RT_Pad_len = lng - 20000
@@ -1016,6 +1030,7 @@ xpm = wbox
 xm = [xpm, -xpm, -xpm, xpm]
 ym = [xpm, xpm, -xpm, -xpm]
 erdrawOD(cjte, xm, ym, JTEInset, JTEWidth, JTE, JTERound, OD, OD_inset)
+erdrawOD(cjte, xm, ym, JTEInset, JTEWidth, ND, JTERound, OD, OD_inset)
 
 #
 #	Psubstrate Contact
@@ -1053,18 +1068,16 @@ for i in range(len(AC_Type)):
 #
 DJ_Type = ["50", "100"]
 for i in range(len(DJ_Type)):
-    cname = "DJAssy_" + DJ_Type[i]
+    cname = "AssyDJ_" + DJ_Type[i]
     Assy_DJ = NewCell(cname)
-#    DJPName = "DJA_" + DJ_Type[i]
-    DJPName = "DJ_" + DJ_Type[i] +"_Edge"
-    #	print(DJPName)
+    DJPName = "DJA_" + DJ_Type[i]
     clist = [DJPName, cotl, "JTE", "PSubC", "DJ_PN",Border_List[i]]
     makeAssy(Assy_DJ, clist)
     CellList.append(cname)
 
 AC_Type = ["50", "100"]
 for i in range(len(AC_Type)):
-    cname = "ACAssy_Str" + AC_Type[i]
+    cname = "AssyAC_Str" + AC_Type[i]
     Assy_AC = NewCell(cname)
     ACCName = "AC" +AC_Type[i]+"_Arr"
     clist = [ACCName, cotl, "PSubC", "ACP_3mm_2x2","3mm_quad"]
@@ -1072,8 +1085,8 @@ for i in range(len(AC_Type)):
     CellList.append(cname)
 
 for i in range(3):
-    cname = Strip_Arrays[i] + "_Assy"
-    if cname.startswith("Strp125"):
+    cname = "Assy_" + Strip_Arrays[i]
+    if Strip_Arrays[i].startswith("Strp125"):
         border = "6mm_with_pads"
         djimp = "DJ_PN"
     else:
@@ -1085,18 +1098,25 @@ for i in range(3):
     CellList.append(cname)
     #
     #	DJ Version
-    cname = Strip_Arrays[i] + "_DJAssy"
+    cname = "AssyDJ" + Strip_Arrays[i]
     STDJ_Ass = NewCell(cname)
     clist = ("PSubC", Strip_Arrays[i], djimp ,border)
     makeAssy(STDJ_Ass, clist)
     CellList.append(cname)
 
-cnam = "RTAssy"
+cnam = "AssyRT"
 RTAss = NewCell(cnam)
 clist = (RTCname, "PSubC","6mm_with_pads")
 makeAssy(RTAss, clist)
 CellList.append(cnam)
 
+for i in range(len(DJ_Type)):
+    cname = "AssyDJ_NB_" + DJ_Type[i]
+    Assy_DJ_NB = NewCell(cname)
+    DJPName = "DJA_" + DJ_Type[i] + "_noBump"
+    clist = [DJPName, cotl, "JTE", "PSubC", "DJ_PN",Border_List[i]]
+    makeAssy(Assy_DJ_NB, clist)
+    CellList.append(cname)
 #
 #	Make Reticule
 #
@@ -1131,7 +1151,7 @@ print(CellList)
 from pathlib import Path
 home_directory = Path.home()
 #print(home_directory)
-gdsversion = "19.2"
+gdsversion = "19.3"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 #print(gdsfile)
 l.drawing.saveFile(gdsfile)
