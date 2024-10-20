@@ -300,6 +300,29 @@ def Make_M1M2M3_Mesh(Prefix, Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, CA_Pitch
         e = cd.addCellref(M3Str, point(0, ypoints[k] + CA_Pitch // 2))
     return cd
 
+def make_2dmesh(cellname, Metal_list, mlayer, via_list):
+    ep = NewCell(cellname + "_mesh")
+    for i in range(len(mlayer)):
+        line_width = Metal_list[i][1]
+        width =  Metal_list[i][0]
+        space = Metal_list[i][2]
+        nline = Metal_list[i][3]
+        pitch = line_width+space
+        yoff = -((nline-1)//2)*pitch
+        xoff = width//2
+        origin_via = point(-xoff+line_width//2, yoff)
+        ref_via = point(-xoff+line_width//2+pitch, yoff+pitch)
+        for j in range (len(via_list)):
+            e = ep.addCellrefArray(via_list[j], origin_via, ref_via, nline, nline)
+        for j in range(nline):
+            ep.addBox(-xoff, yoff - line_width // 2, width, line_width, mlayer[i])
+            yoff = yoff + pitch
+        xoff = -((nline - 1) // 2) * pitch
+        yoff = width // 2
+        for j in range(nline):
+            ep.addBox(-xoff-line_width//2, -yoff, line_width, width, mlayer[i])
+            xoff = xoff+pitch
+    return ep
 
 def Place_Pad(cd, Name, SXY_Active, SPitch, Slength ):
     astr = NewCell(Name + "_Arr")
@@ -371,7 +394,6 @@ JTE = 116  # Junction termination extension IMPLANT (NP-JTE)
 PGN = 117  # boron gain layer IMPLANT (NC)
 NC = 117
 ACN = 55  # AC phos layer IMPLANT (NQ)
-ZP = 58  # top passivation openings
 NPL = 66  # n+ IMPLANT (NP)
 NP = 66
 MET = 44  # original design Metal
@@ -381,7 +403,8 @@ M3 = 49  # Metal 3
 V1 = 46  # Via from M1 to M2
 V2 = 48  # Hole to connect M3 to M2
 ZG = 56  # Hole to connect ZA to M3
-ZA = 57  # 4th Metal (Al,Top Metal)
+ZA = 57  # pad Metal (Al,Top Metal)
+ZP = 58  # top passivation openings
 CON = 25  # Contact (CA)
 CA = 25  # contact
 # ACC = 9
@@ -394,7 +417,7 @@ ND = 19 # n contact IMPLANT
 PW = 78 # P-well IMPLANT
 
 # inset of active
-OD_inset = 100
+OD_inset = 120
 # Number of guard rings
 nrings = 5
 # Device pixel pitches
@@ -428,7 +451,7 @@ RTGap = 100000
 RTLenx = RTPitchx - RTGap  # active lengths
 RTLeny = RTPitchy - RTGap
 RTRound = 5000  # corner rounding radius
-RTOXRad = 6000
+# RTOXRad = 6000
 RTMRad = RTLenx // 4
 
 # JTE parameters
@@ -513,8 +536,8 @@ for i in range(len(Via_Cells)):
     ml.addBox(-Via_Widths[i], -Via_Widths[i], 2 * Via_Widths[i], 2 * Via_Widths[i], Via_Layers[i])
     #  4x4 contact Cell
     ml4x4 = NewCell(Via_Cells[i] + "_4x4")
-    VS = Via_Spaces[i] // 2
-    e = ml4x4.addCellrefArray(ml, point(-VS, -VS), point(VS, VS), 2, 2)
+    VS = (Via_Spaces[i]+2*Via_Widths[i])
+    e = ml4x4.addCellrefArray(ml, point(-VS, -VS), point(0, 0), 3, 3)
     if i == 2:
         Via_List.append(ml)
     else:
@@ -536,8 +559,8 @@ padWidth_80 = 77000
 padLength_80 = 205000
 OXLength_80 = 190000
 OXWidth_80 = 71000
-e = adddrBox(BP_80, -OXWidth_80// 2, -OXLength_80//2, OXWidth_80, OXLength_80, 0, ZA)
-e = adddrBox(BP_80, -padWidth_80 // 2, -padLength_80 // 2, padWidth_80, padLength_80, 0, ZP)
+e = adddrBox(BP_80, -OXWidth_80// 2, -OXLength_80//2, OXWidth_80, OXLength_80, 0, ZP)
+e = adddrBox(BP_80, -padWidth_80 // 2, -padLength_80 // 2, padWidth_80, padLength_80, 0, ZA)
 e = BP_80.addCellref(BP_M3_Via_80, point(0, padLength_80//2-2500))
 e = BP_80.addCellref(BP_M3_Via_80, point(0, -padLength_80//2+2500))
 
@@ -547,8 +570,8 @@ padWidth_60 = 57000
 padLength_60 = 205000
 OXLength_60 = 190000
 OXWidth_60 = 51000
-e = adddrBox(BP_60, -OXWidth_60// 2, -OXLength_60//2, OXWidth_60, OXLength_60, 0, ZA)
-e = adddrBox(BP_60, -padWidth_60 // 2, -padLength_60 // 2, padWidth_60, padLength_60, 0, ZP)
+e = adddrBox(BP_60, -OXWidth_60// 2, -OXLength_60//2, OXWidth_60, OXLength_60, 0, ZP)
+e = adddrBox(BP_60, -padWidth_60 // 2, -padLength_60 // 2, padWidth_60, padLength_60, 0, ZA)
 e = BP_60.addCellref(BP_M3_Via_60, point(0, padLength_60//2-2500))
 e = BP_60.addCellref(BP_M3_Via_60, point(0, -padLength_60//2+2500))
 
@@ -557,13 +580,17 @@ BCell = NewCell("BumpPad")
 DrawBump(BCell, 8300, ZA)  # Standard bump pad - check dimensions
 DrawBump(BCell, 6500, ZP)
 
-
 # Metal-Via stack for pads not including CA
 M23V23Z = NewCell("M1M2V1V2ZG_Pad")
 for Layer in range(3):
     M23V23Z.addCellref(Pad_List[Layer], point(0, 0))
     M23V23Z.addCellref(Via_List[Layer], point(0, 0))
     M23V23Z.addCellref(BCell, point(0, 0))
+
+M3ZG = NewCell("ZG_Pad")
+M3ZG.addCellref(Pad_List[2], point(0, 0))
+M3ZG.addCellref(Via_List[2], point(0, 0))
+M3ZG.addCellref(BCell, point(0, 0))
 
 Letters = []
 CNames = "abcdefghijklmn"
@@ -695,6 +722,8 @@ for i in range(len(Strip_Pitch)):
     STRound = 2000  # edge rounding parameter for strips
     STMSurr = 1000
     e = adddrBoxOD(cd, -wid // 2, -lng // 2, wid, lng, STRound, Imp_Lyr[i], OD, OD_inset)
+    if Imp_Lyr[i] == NPL:
+        e = adddrBox(cd, -wid // 2, -lng // 2, wid, lng, STRound, ND)
     #
     #   Add edge field plate
     #
@@ -723,7 +752,8 @@ for i in range(len(Strip_Pitch)):
         pslen = Slength // 2
         xps = [psx, -psx, -psx, psx]
         yps = [pslen, pslen, -pslen, -pslen]
-        erdrawOD(cd, xps, yps, pswidth, 0, PW, rad, OD, OD_inset)
+        erdraw(cd, xps, yps, pswidth, 0, PW, rad)
+
 
     #      Add bond pads
     BPinset = 255000
@@ -803,11 +833,6 @@ NstX = SXY_Active // SPitch
 NstY = SXY_Active // Slength
 xoff = -(((NstX) - 1) * SPitch) // 2
 yoff = -(((NstY) - 1) * Slength) // 2
-# pref = point(xoff, yoff)
-# poff = point(xoff + SPitch, y = point(xoff, yoff)
-# # poff = point(xoff + SPitch, yoff + Slength)
-# # e = Bump_125.addCellrefArray(M23V23Z, pref, poff, NstX//2, NstY)off + Slength)
-# e = Bump_125.addCellrefArray(M23V23Z, pref, poff, NstX//2, NstY)
 #
 #   Staggered pad section - MAKE IT ALL STAGGERED 9/27/24
 #
@@ -834,6 +859,9 @@ DJAName = ["DJA_50", "DJA_100"]
 DJMRad = 22000  # Radius of m1 layer
 DJMSur = 5000  # 2 x metal surround of implant
 
+Metal_list = [[[37000, 1000, 2000, 13], [37000, 1000, 2000, 13], [37000, 1000, 2000, 13]],
+[[85000, 1000, 2000, 29], [85000, 1000, 2000, 29], [85000, 1000, 2000, 29]]]
+Via_list = [Via_List[0], Via_List[1], CA4x4]
 ## moff = 80000  # for strips
 DJIWid_2 = 500
 DJM2_Wid_2 = 1000
@@ -845,33 +873,35 @@ for i in range(len(Pitch)):
     cpad = NewCell(DJName[i] + "Base")
     lng = Pitch[i] - DJInset
     e = adddrBoxOD(cpad, -lng // 2, -lng // 2, lng, lng, DJRound, NPL, OD, OD_inset)
+    e = adddrBox(cpad, -lng // 2, -lng // 2, lng, lng, DJRound, ND)
     crad = 12000
     #  Mesh Contact
     Len_XY = [Pitch[i] - DJInset, Pitch[i] - DJInset]
-    M12_Pitch = [2 * M1_Width, 2 * M2_Width]
+#    M12_Pitch = [2 * M1_Width, 2 * M2_Width]
 #    Ref = Make_M1M2_Mesh(DJName[i], Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List[0])
-    Ref = Make_M1M2M3_Mesh(DJName[i], Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List)
+#    Ref = Make_M1M2M3_Mesh(DJName[i], Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List)
+    Ref = make_2dmesh(DJName[i], Metal_list[i], Pad_Layers, Via_list)
     e = cpad.addCellref(Ref, point(0, 0))
 
-#    xpm = lng//2 - DJInset//2
-    xpm = lng//2 - DJRound
+#   add fielf plates
+    xpm = lng//2 - DJRound# -*- coding: utf-8 -*-
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
-    erdraw(cpad, xm, ym, DJM2_Wid_2, DJM2_Wid_2, M2, DJRound)
+    erdraw(cpad, xm, ym, DJM2_Wid_2+2000, DJM2_Wid_2, M2, DJRound)
     # Add isolation - assume square
     wbox = Pitch[i] // 2
     xpm = wbox
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
-    erdrawOD(cpad, xm, ym, DJIWid_2, 0, PW, 0, OD, OD_inset)
+    erdraw(cpad, xm, ym, DJIWid_2, 0, PW, 0)
 # cell without central bump
     dpad = NewCell(DJName[i]+"_NoBump")
     e = dpad.addCellref(cpad, point(0, 0))
 # cell with bump
     epad = NewCell(DJName[i])
     e = epad.addCellref(cpad, point(0, 0))
-
-    e = epad.addCellref(M23V23Z, point(0, 0))  # bump in cell  center
+#    e = epad.addCellref(M23V23Z, point(0, 0))  # bump in cell  center
+    e = epad.addCellref(M3ZG, point(0, 0))  # bump in cell  center
     #
     # pixel array cell
     apad = NewCell(DJAName[i])
@@ -923,6 +953,7 @@ RTPy_2 = RTPitchy // 2
 rtpad.addBox(-RTPx_2, -RTPy_2, RTPitchx, RTPitchy, OTL)
 lng = RTPitchx - RTGap
 e = adddrBoxOD(rtpad, -lng // 2, -lng // 2, lng, lng, RTRound, NPL, OD, OD_inset)
+e = adddrBox(rtpad, -lng // 2, -lng // 2, lng, lng, RTRound, ND)
 e = adddrBoxOD(rtpad, -lng // 2 + RTGin, -lng // 2 + RTGin, lng - 2 * RTGin, lng + -2 * RTGin, RTRound, PGN, OD, OD_inset)
 # add JTE
 wbox = lng // 2 - RTGin
@@ -969,16 +1000,23 @@ ACMetx = [30000, 60000]  # 50 and 100 micron pad size
 ACMety = [30000, 60000]
 ACPitch_M1X = [2000, 2000]  # metal pitch (for 50% coverage)
 ACPitch_M2Y = [8000, 8000]
+
+Metal_list = [[[31000, 1000, 2000, 11], [31000, 1000, 2000, 11], [31000, 1000, 2000, 11]],
+[[61000, 1000, 2000, 21], [61000, 1000, 2000, 21], [61000, 1000, 2000, 21]]]
+mlayer =  [43, 47, 49]
 # M1_Strips = []
 
 name = ["ACPad_50", "ACPad_100"]
 aname = ["AC_Array_50", "AC_Array_100"]
+Via_list = [empty_cell, Via_List[0], Via_List[1]]
 
 for i in range(len(ACMetx)):
     cd = NewCell(name[i])
     Len_XY = [ACMetx[i], ACMety[i]]
 #    print("Lenxy=",Len_XY)
-    Ref = Make_M1M2M3_Mesh(name[i], Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List)
+#    Ref = Make_M1M2M3_Mesh(name[i], Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List)
+
+    Ref = make_2dmesh(name[i], Metal_list[i], Pad_Layers, Via_list)
     cd.addCellref(Ref, point(0, 0))
 
     # Outline
@@ -994,8 +1032,8 @@ for i in range(len(ACMetx)):
     pref = point(xoff, yoff)
     poff = point(xoff + Pitch[i], yoff + Pitch[i])
     e = apad.addCellrefArray(cd, pref, poff, NPXRow[i], NPXCol[i])
-    e = cd.addCellref(M23V23Z, point(0, 0))
-
+    # e = cd.addCellref(M23V23Z, point(0, 0))
+    e = cd.addCellref(M3ZG, point(0, 0))
 # Gain Layer
 #name = "Gain_Layer"
 for i in range(len(length)):
@@ -1151,7 +1189,7 @@ print(CellList)
 from pathlib import Path
 home_directory = Path.home()
 #print(home_directory)
-gdsversion = "19.3"
+gdsversion = "19.5"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 #print(gdsfile)
 l.drawing.saveFile(gdsfile)
