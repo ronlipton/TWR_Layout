@@ -5,7 +5,7 @@ from pprint import pprint
 
 def BoxDraw(c, xgr, ygr, radius, whigh, wlow, layer):
     #
-    #       Draw Top, bottom, left, right boxes to enclosure a pixel or strip area
+    #       Draw Top, bottom, left, right boxes to enclose a pixel or strip area
     #   ie y of top =- ygr(0) + radius + whigh ...
     #   c - target cell
     #   xgr - x values (4) of guide box
@@ -192,6 +192,8 @@ def bpArray(celtgt, bpcell, xur, yur):
 
 
 def padArray(homecell, padcell, npad, xstart, xpitch, ypos, smwidth):
+    #
+    # x array of npad pad cells
     xpad = xstart
     for ind in range(npad):
         p = point(xpad, ypos)
@@ -225,15 +227,18 @@ def NewCell(CName):
 import math
 
 
-def DrawBump(BP, radius, layer):
-    angle = 0.785398163
-    sangle = angle / 2
-    vertices = [(round(radius * math.cos(i * angle - sangle)), round(radius * math.sin(i * angle - sangle))) for i in
+def DrawBump(BP, len, layer):
+    angle = 0.785398
+    sangle = angle/2
+    radius = float(len)/math.cos(sangle)
+#    radius = len//math.cos(sangle)
+    vertices = [(round50(radius * math.cos(i * angle - sangle)), round50(radius * math.sin(i * angle - sangle))) for i in
                 range(8)]
     vertices.append(vertices[0])
+    # print(vertices)
     pts = pointArray()
     x, y = zip(*vertices)
-    for i in range(len(vertices)):
+    for i in range(9):
         vt = vertices[i]
         pts.attach(x[i], y[i])
     BP.addPolygon(pts, layer)
@@ -381,6 +386,34 @@ def make_EdgeArray(Cname, BCell, ECell, NX, NY, DX, DY):
     dcell.addCellrefArray(BCell, p1, p2, 1, NY - 2)
     return dcell
 
+def round50(x):
+    return int(math.ceil((x-25)/ 50.0)) * 50
+
+def makeFillCell(FCname, Nx, Ny, FCpitch, Pad_Metal, Pad_Space, Bot_point):
+    #
+    # Make a fill cell of 2x2 metal squares
+    # FCname - final cell name
+    # Nx, Ny number of columns and rows
+    # FCpitch - pitch of parent array (fill is x 2 of this)
+    # Pad_Metal list of m1-3 pads
+    # Bot_point - anchor point of parent array
+    rcell = NewCell(FCname)
+    fcell = NewCell(FCname+"_square")
+    for i in range(len(Pad_Metal)):
+        p1 = point(-Pad_Space, -Pad_Space)
+        p2 = point(Pad_Space, Pad_Space)
+        fcell.addCellrefArray(Pad_Metal[i], p1, p2, 2, 2)
+    V0 = point(Bot_point.x()-FCpitch//2, Bot_point.y()-FCpitch//2)
+    V1 = point(Bot_point.x()+FCpitch//2, Bot_point.y())
+
+    H0 = point(Bot_point.x()-FCpitch//2, Bot_point.y()-FCpitch//2)
+    H1 = point(Bot_point.x(), Bot_point.y()+FCpitch//2)
+    rcell.addCellrefArray(fcell, V0, V1, Nx+1, 2*(Ny)+1)
+    rcell.addCellrefArray(fcell, H0, H1, 2*Nx+1, (Ny)+1)
+
+
+    return rcell
+
 
 import LayoutScript
 from LayoutScript import *
@@ -401,7 +434,7 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #
 #   Import SLAC portions
 #
-dr.importFile("/Users/ronlipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v6.gds")
+dr.importFile("/Users/ronlipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v7.gds")
 
 OTL = 0  # outline for drawing
 OD = 1  # Defines active window
@@ -426,10 +459,11 @@ CA = 25  # contact
 DJP = 18  # Deep junction p IMPLANT (PX)
 DJN = 16  # Deep junction n IMPLANT (DW?)
 PSB = 21  # p substrate contact IMPLANT (PD??)
-PD = 21
+PD = 21 # p contact implant
 # PST = 117  # p stop (NC)
 ND = 19  # n contact IMPLANT
 PW = 78  # P-well IMPLANT
+OF = 122 # pixel isolation
 
 # inset of active
 OD_inset = 120
@@ -502,7 +536,7 @@ Via_Layers = [V1, V2, ZG]
 # metal ine half-widths
 M1_Width_2 = 500
 M2_Width_2 = 2000
-M3_Width_2 = 3000
+M3_Width_2 = 2000
 M1_Width = 2 * M1_Width_2
 M2_Width = 2 * M2_Width_2
 M3_Width = 2 * M3_Width_2
@@ -512,7 +546,7 @@ Pad_Widths = [M1_Width_2, M2_Width_2, M3_Width_2]
 Pad_Cells = ["M1_Pad", "M2_Pad", "M3_Pad"]
 Via_Cells = ["V1_Via", "V2_Via", "ZG_Via"]
 Pad_Layers = [M1, M2, M3]
-Pad_Ref = []
+# Pad_Ref = []
 # Make Metal Pad cells
 Pad_List = []
 for i in range(len(Pad_Cells)):
@@ -562,12 +596,16 @@ for i in range(len(Via_Cells)):
 
 BP_M3_Via_80 = NewCell("BP_M3_via80")
 BPM3Width = 73000
-BPM3Length = 3000
+# 10/24/24 modified for 2 um zg m3 overlap rule
+BPM3Length = 2000
+ZGM3_ovr = 2000
 e = adddrBox(BP_M3_Via_80, -BPM3Width // 2, -BPM3Length // 2, BPM3Width, BPM3Length, 0, ZG)
+e = adddrBox(BP_M3_Via_80, -BPM3Width // 2 - ZGM3_ovr, -BPM3Length // 2- ZGM3_ovr, BPM3Width + 2*ZGM3_ovr, BPM3Length+2*ZGM3_ovr, 0, M3)
 BP_M3_Via_60 = NewCell("BP_M3_via60")
 BPM3Width = 42000
-BPM3Length = 3000
+#BPM3Length = 3000
 e = adddrBox(BP_M3_Via_60, -BPM3Width // 2, -BPM3Length // 2, BPM3Width, BPM3Length, 0, ZG)
+e = adddrBox(BP_M3_Via_60, -BPM3Width // 2 - ZGM3_ovr, -BPM3Length // 2- ZGM3_ovr, BPM3Width + 2*ZGM3_ovr, BPM3Length+2*ZGM3_ovr, 0, M3)
 
 # 80 micron bond pad
 BP_80 = NewCell("Bond_Pad_80")
@@ -593,7 +631,7 @@ e = BP_60.addCellref(BP_M3_Via_60, point(0, -padLength_60 // 2 + 2500))
 
 #   Bump Pad_Cell
 BCell = NewCell("BumpPad")
-DrawBump(BCell, 8300, ZA)  # Standard bump pad - check dimensions
+DrawBump(BCell, 9500, ZA)  # Standard bump pad - check dimensions
 DrawBump(BCell, 6500, ZP)
 
 # Metal-Via stack for pads not including CA
@@ -608,19 +646,19 @@ M3ZG.addCellref(Pad_List[2], point(0, 0))
 M3ZG.addCellref(Via_List[2], point(0, 0))
 M3ZG.addCellref(BCell, point(0, 0))
 
-Letters = []
-CNames = "abcdefghijklmn"
-for j in range(13):
-    num = l.drawing.addCell()
-    cname = "c_" + CNames[j]
-    num.thisCell.cellName = cname
-    ##	e = l.drawing.setCell(cname)
-    cCell = num.thisCell
-    e = cCell.addText(MET, point(0, 0), CNames[j])
-    e.setWidth(200000)
-    l.drawing.textSelect()
-    l.drawing.toPolygon()
-    Letters.append(cCell)
+# Letters = []
+# CNames = "abcdefghijklmn"
+# for j in range(13):
+#     num = l.drawing.addCell()
+#     cname = "c_" + CNames[j]
+#     num.thisCell.cellName = cname
+#     ##	e = l.drawing.setCell(cname)
+#     cCell = num.thisCell
+#     e = cCell.addText(MET, point(0, 0), CNames[j])
+#     e.setWidth(200000)
+#     l.drawing.textSelect()
+#     l.drawing.toPolygon()
+#     Letters.append(cCell)
 
 ntype = 3
 CA_Contact = l.drawing.findCell("Contact_4x4")
@@ -636,7 +674,7 @@ Str_Length_2 = Str_Length // 2
 empty_cell = NewCell("empty")
 offset_3mm = 1500000
 
-#	strip parameters
+#	strip parameters for 6 and 3mm cells
 Strip_Pitch = [12500, 50000, 50000, 50000, 50000, 100000, 100000, 100000, 100000]
 Strip_Length = [50000, Str_Length, Str_Length, Str_Length, Str_Length, \
                 Str_Length, Str_Length, Str_Length, Str_Length]
@@ -674,7 +712,6 @@ Strip_Arrays = []
 # DJ Implants
 DJNinset = 15000  # inset of deep N (phos) from active length
 DJPinset = 5000  # inset of deep P (Boron) from active length
-DJRound = 5000  # edge rounding radius
 DJRound = 2000  # edge rounding radius
 DJInset = 10000
 
@@ -729,13 +766,13 @@ for i in range(len(Strip_Pitch)):
     Strip_imp_width.append(Strip_Pitch[i] - STInset)
 
 cellnames_3mm = []
+smwidth = M1_Width
 for i in range(len(Strip_Pitch)):
 
     SPitch = Strip_Pitch[i]
     Slength = Strip_Length[i]
     DCStripn = Strip_name[i]
     siwidth = Strip_imp_width[i]
-    smwidth = M1_Width
     cd = NewCell(DCStripn)
     lng = Slength - sgap
     wid = siwidth
@@ -769,7 +806,7 @@ for i in range(len(Strip_Pitch)):
         pslen = Slength // 2
         xps = [psx, -psx, -psx, psx]
         yps = [pslen, pslen, -pslen, -pslen]
-        erdraw(cd, xps, yps, pswidth, 0, PW, rad)
+        erdraw(cd, xps, yps, pswidth, 0, OF, rad)
     #        cd.addCellref(bpad, point(0, 0))
 
     #      Add bond pads, make array
@@ -920,7 +957,7 @@ for i in range(len(Pitch)):
     Ref = make_2dmesh(DJName[i], Metal_list[i], Pad_Layers, Via_list)
     e = cpad.addCellref(Ref, point(0, 0))
 
-    #   add fielf plates
+    #   add field plates
     xpm = lng // 2 - DJRound  # -*- coding: utf-8 -*-
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
@@ -930,7 +967,7 @@ for i in range(len(Pitch)):
     xpm = wbox
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
-    erdraw(cpad, xm, ym, DJIWid_2, 0, PW, 0)
+    erdraw(cpad, xm, ym, DJIWid_2, 0, OF, 0)
     # cell without central bump
     dpad = NewCell(DJName[i] + "_NoBump")
     e = dpad.addCellref(cpad, point(0, 0))
@@ -1016,7 +1053,7 @@ rtpad.addCellref(BP_80, point(0, 0))
 xpm = wbox
 xm = [xpm, -xpm, -xpm, xpm]
 ym = [xpm, xpm, -xpm, -xpm]
-erdrawOD(rtpad, xm, ym, PIWid_2, PIWid_2, PW, RTRound, OD, OD_inset)
+erdrawOD(rtpad, xm, ym, PIWid_2, PIWid_2, OF, RTRound, OD, OD_inset)
 # erdraw(rtpad, xm, ym, PIWid_2-OD_inset, PIWid_2-OD_inset, OD, RTRound)
 #
 # Array cell
@@ -1041,17 +1078,14 @@ ACPitch_M2Y = [8000, 8000]
 Metal_list = [[[31000, 1000, 2000, 11], [31000, 1000, 2000, 11], [31000, 1000, 2000, 11]],
               [[61000, 1000, 2000, 21], [61000, 1000, 2000, 21], [61000, 1000, 2000, 21]]]
 mlayer = [43, 47, 49]
-# M1_Strips = []
 
 name = ["ACPad_50", "ACPad_100"]
 aname = ["AC_Array_50", "AC_Array_100"]
 Via_list = [empty_cell, Via_List[0], Via_List[1]]
 
-for i in range(len(ACMetx)):
+for i in range(len(name)):
     cd = NewCell(name[i])
     Len_XY = [ACMetx[i], ACMety[i]]
-    #    print("Lenxy=",Len_XY)
-    #    Ref = Make_M1M2M3_Mesh(name[i], Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List)
 
     Ref = make_2dmesh(name[i], Metal_list[i], Pad_Layers, Via_list)
     cd.addCellref(Ref, point(0, 0))
@@ -1069,17 +1103,19 @@ for i in range(len(ACMetx)):
     pref = point(xoff, yoff)
     poff = point(xoff + Pitch[i], yoff + Pitch[i])
     e = apad.addCellrefArray(cd, pref, poff, NPXRow[i], NPXCol[i])
-    # e = cd.addCellref(M23V23Z, point(0, 0))
     e = cd.addCellref(M3ZG, point(0, 0))
+    # add fill
+    FCname = name[i] + "_Fill"
+    Fill = makeFillCell(FCname, NPXRow[i], NPXCol[i], Pitch[i], Pad_List, Pitch[i] // 10, pref)
+    e = apad.addCellref(Fill, point(0, 0))
+
+
+
 # Gain Layer
 # name = "Gain_Layer"
 for i in range(len(length)):
     activeLength = length[i]
-    #	wbox = (activeLength+gainsurr)//2
-    # epd = l.drawing.addCell()
-    # epd.thisCell.cellName = name
     cpad = NewCell("Gain_Layer")
-    # cpad = epd.thisCell
     e = adddrBoxOD(cpad, -(activeLength + gsurr) // 2, -(activeLength + gsurr) // 2, \
                    activeLength + gsurr, activeLength + gsurr, gainround, PGN, OD, OD_inset)
 # AC gain Layer 3mm
@@ -1150,15 +1186,6 @@ for i in range(len(DJ_Type)):
     makeAssy(Assy_DJ, clist)
     CellList.append(cname)
 
-# AC_Type = ["50", "100"]
-# for i in range(len(AC_Type)):
-#    cname = "AssyAC_Str" + AC_Type[i]
-#    Assy_AC = NewCell(cname)
-#    ACCName = "AC" +AC_Type[i]+"_Arr"
-#    clist = [ACCName, cotl, "PSubC", "ACP_3mm_2x2","3mm_quad"]
-#    makeAssy(Assy_AC, clist)
-#    CellList.append(cname)
-#
 for i in range(1):
     cname = "Assy_" + Strip_Arrays[i]
     # 6mm border for 12.5 micon pitch
@@ -1172,13 +1199,6 @@ for i in range(1):
     clist = ("PSubC", Strip_Arrays[i], border)
     makeAssy(STX_Ass, clist)
     CellList.append(cname)
-#    #
-#    #	DJ Version
-#    cname = "AssyDJ" + Strip_Arrays[i]
-#    STDJ_Ass = NewCell(cname)
-#    clist = ("PSubC", Strip_Arrays[i], djimp ,border)
-#    makeAssy(STDJ_Ass, clist)
-#    CellList.append(cname)
 
 cnam = "AssyRT"
 RTAss = NewCell(cnam)
@@ -1234,9 +1254,6 @@ for i in range(len(CellList)):
     Ry = Y0 + RRow * XYCell
     cnew = l.drawing.findCell(CellList[i])
     p = point(Rx, Ry)
-    #   print(cnew, CellList[i])
-    #    print(RRow)
-    #    print(RCol)
     Ret.addCellref(cnew, p)
 
 print(CellList)
@@ -1245,7 +1262,7 @@ from pathlib import Path
 
 home_directory = Path.home()
 # print(home_directory)
-gdsversion = "20.0"
+gdsversion = "20.2"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 # print(gdsfile)
 l.drawing.saveFile(gdsfile)
