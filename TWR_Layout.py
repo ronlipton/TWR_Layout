@@ -230,10 +230,11 @@ import math
 def DrawBump(BP, len, layer):
     angle = 0.785398
     sangle = angle/2
+    grid = 50
     radius = float(len)/math.cos(sangle)
 #    radius = len//math.cos(sangle)
-    vertices = [(round50(radius * math.cos(i * angle - sangle)), round50(radius * math.sin(i * angle - sangle))) for i in
-                range(8)]
+    vertices = [(roundGrid(radius * math.cos(i * angle - sangle), grid), \
+                roundGrid(radius * math.sin(i * angle - sangle), grid)) for i in range(8)]
     vertices.append(vertices[0])
     # print(vertices)
     pts = pointArray()
@@ -386,10 +387,11 @@ def make_EdgeArray(Cname, BCell, ECell, NX, NY, DX, DY):
     dcell.addCellrefArray(BCell, p1, p2, 1, NY - 2)
     return dcell
 
-def round50(x):
-    return int(math.ceil((x-25)/ 50.0)) * 50
-
-def makeFillCell(FCname, Nx, Ny, FCpitch, Pad_Metal, Pad_Space, Bot_point):
+def roundGrid(x, grid):
+    return int(math.ceil((x-25)/float(grid))) * grid
+# import numpy as np
+# Fill = makeFillCell(FCname, NFill, Pad_List, Pad_Widths, BSide, pref, NPXRow[i], Pitch[i])
+def makeFillCell(FCname, NFill, Pad_Metal, Pad_Width, BSide, Bot_point, NXY, FCpitch):
     #
     # Make a fill cell of 2x2 metal squares
     # FCname - final cell name
@@ -399,18 +401,21 @@ def makeFillCell(FCname, Nx, Ny, FCpitch, Pad_Metal, Pad_Space, Bot_point):
     # Bot_point - anchor point of parent array
     rcell = NewCell(FCname)
     fcell = NewCell(FCname+"_square")
+    fcell.addBox(-BSide//2, -BSide//2, BSide, BSide, OTL)
     for i in range(len(Pad_Metal)):
-        p1 = point(-Pad_Space, -Pad_Space)
-        p2 = point(Pad_Space, Pad_Space)
-        fcell.addCellrefArray(Pad_Metal[i], p1, p2, 2, 2)
+        spacing = roundGrid((BSide-NFill[i]*2*Pad_Width[i]) / (NFill[i] + 1), 50)
+        fpitch = 2*Pad_Width[i] + spacing
+        #p1 = point(-fpitch*NFill[i]/2, -fpitch*NFill[i]/2)
+        p1 = point(-BSide//2+Pad_Width[i]+spacing, -BSide//2+Pad_Width[i]+spacing)
+        p2 = point(p1.x()+fpitch, p1.y()+fpitch)
+        fcell.addCellrefArray(Pad_Metal[i], p1, p2, NFill[i], NFill[i])
     V0 = point(Bot_point.x()-FCpitch//2, Bot_point.y()-FCpitch//2)
-    V1 = point(Bot_point.x()+FCpitch//2, Bot_point.y())
+    V1 = point(V0.x()+FCpitch, V0.y()+FCpitch//2)
 
     H0 = point(Bot_point.x()-FCpitch//2, Bot_point.y()-FCpitch//2)
-    H1 = point(Bot_point.x(), Bot_point.y()+FCpitch//2)
-    rcell.addCellrefArray(fcell, V0, V1, Nx+1, 2*(Ny)+1)
-    rcell.addCellrefArray(fcell, H0, H1, 2*Nx+1, (Ny)+1)
-
+    H1 = point(H0.x()+FCpitch//2, H0.y()+FCpitch)
+    rcell.addCellrefArray(fcell, V0, V1, NXY+1, 2*(NXY)+1)
+    rcell.addCellrefArray(fcell, H0, H1, 2*NXY+1, (NXY)+1)
 
     return rcell
 
@@ -434,7 +439,7 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #
 #   Import SLAC portions
 #
-dr.importFile("/Users/ronlipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v7.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v7.gds")
 
 OTL = 0  # outline for drawing
 OD = 1  # Defines active window
@@ -1082,8 +1087,12 @@ mlayer = [43, 47, 49]
 name = ["ACPad_50", "ACPad_100"]
 aname = ["AC_Array_50", "AC_Array_100"]
 Via_list = [empty_cell, Via_List[0], Via_List[1]]
-
+#  fill rows, columns for 50, 100 micron
+NFill = [[6, 2, 2],[8, 4, 4]]
+# Nfill = [8, 4, 4]
 for i in range(len(name)):
+    BSide = Pitch[i] - Metal_list[i][0][0]
+    print(BSide)
     cd = NewCell(name[i])
     Len_XY = [ACMetx[i], ACMety[i]]
 
@@ -1106,7 +1115,9 @@ for i in range(len(name)):
     e = cd.addCellref(M3ZG, point(0, 0))
     # add fill
     FCname = name[i] + "_Fill"
-    Fill = makeFillCell(FCname, NPXRow[i], NPXCol[i], Pitch[i], Pad_List, Pitch[i] // 10, pref)
+
+    Fill = makeFillCell(FCname, NFill[i], Pad_List, Pad_Widths, BSide, pref, NPXRow[i], Pitch[i])
+    #def def makeFillCell(FCname, NFill, Pad_Metal, Pad_Space, Bot_point, NXY, FCPitch):
     e = apad.addCellref(Fill, point(0, 0))
 
 
@@ -1224,7 +1235,7 @@ for i in range(2):
     c_3mm = cell3mm_list[i]
     for j in range(4):
         ccell = l.drawing.findCell(cellnames_3mm[4 * i + j])
-        print(cellnames_3mm[4 * i + j], i, j)
+        # print(cellnames_3mm[4 * i + j], i, j)
         px = offx_3mm[j]
         py = offy_3mm[j]
         c_3mm.addCellref(ccell, point(px, py))
