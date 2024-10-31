@@ -388,9 +388,9 @@ def make_EdgeArray(Cname, BCell, ECell, NX, NY, DX, DY):
     return dcell
 
 def roundGrid(x, grid):
-    return int(math.ceil((x-25)/float(grid))) * grid
+    return int(math.ceil((x-(grid//2))/float(grid))) * grid
+
 # import numpy as np
-# Fill = makeFillCell(FCname, NFill, Pad_List, Pad_Widths, BSide, pref, NPXRow[i], Pitch[i])
 def makeFillCell(FCname, NFill, Pad_Metal, Pad_Width, BSide, Bot_point, NXY, FCpitch):
     #
     # Make a fill cell of 2x2 metal squares
@@ -416,8 +416,40 @@ def makeFillCell(FCname, NFill, Pad_Metal, Pad_Width, BSide, Bot_point, NXY, FCp
     H1 = point(H0.x()+FCpitch//2, H0.y()+FCpitch)
     rcell.addCellrefArray(fcell, V0, V1, NXY+1, 2*(NXY)+1)
     rcell.addCellrefArray(fcell, H0, H1, 2*NXY+1, (NXY)+1)
-
     return rcell
+
+#Fill = makeACFill(FCname, NFill[i], Pad_List, Pad_Widths, BSide, Pitch[i])
+def makeACFill(FCname, NFill, Pad_List, Pad_Widths, BSide, Pitch):
+    fcell = NewCell(FCname)
+    for i in range(len(NFill)):
+        width = Pad_Widths[i]*2
+        space = roundGrid(Pitch/NFill[i], 50)
+        for jx in range(NFill[i]):
+            for jy in range(NFill[i]):
+                xbox = -Pitch//2 +space//2 +jx*space
+                ybox = -Pitch//2 +space//2 +jy*space
+                ref = point(xbox, ybox)
+                if is_outside(xbox,ybox, width, BSide+2000):
+                    fcell.addCellref(Pad_List[i],ref)
+    return fcell
+
+
+def is_outside(x, y, z, a):
+    # Half-sides of each box
+    half_z = z / 2
+    half_a = a / 2
+
+    # Calculate the smaller box's boundary positions
+    min_x = x - half_z
+    max_x = x + half_z
+    min_y = y - half_z
+    max_y = y + half_z
+
+    # Check if any boundary exceeds the larger box's boundaries
+    if (min_x > half_a) or (max_x < -half_a) or (min_y > half_a) or (max_y < -half_a) :
+        return True  # The box is outside
+    else:
+        return False  # The box is inside
 
 
 import LayoutScript
@@ -439,7 +471,7 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #
 #   Import SLAC portions
 #
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v7.gds")
+dr.importFile("/Users/ronlipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v9_r2.gds")
 
 OTL = 0  # outline for drawing
 OD = 1  # Defines active window
@@ -530,7 +562,7 @@ V2_Space = 200
 V3_Width = 50  # V3 half width
 V3_Space = 300
 
-ZG_Width = 1500  # M3 to top metal half-width
+ZG_Width = 750  # M3 to top metal half-width
 ZG_Space = 9000
 
 # Make Via list
@@ -620,8 +652,8 @@ OXLength_80 = 190000
 OXWidth_80 = 71000
 e = adddrBox(BP_80, -OXWidth_80 // 2, -OXLength_80 // 2, OXWidth_80, OXLength_80, 0, ZP)
 e = adddrBox(BP_80, -padWidth_80 // 2, -padLength_80 // 2, padWidth_80, padLength_80, 0, ZA)
-e = BP_80.addCellref(BP_M3_Via_80, point(0, padLength_80 // 2 - 2500))
-e = BP_80.addCellref(BP_M3_Via_80, point(0, -padLength_80 // 2 + 2500))
+e = BP_80.addCellref(BP_M3_Via_80, point(0, padLength_80 // 2 - 3000))
+e = BP_80.addCellref(BP_M3_Via_80, point(0, -padLength_80 // 2 + 3000))
 
 #  60 micron bond pad
 BP_60 = NewCell("Bond_Pad_60")
@@ -631,8 +663,8 @@ OXLength_60 = 190000
 OXWidth_60 = 51000
 e = adddrBox(BP_60, -OXWidth_60 // 2, -OXLength_60 // 2, OXWidth_60, OXLength_60, 0, ZP)
 e = adddrBox(BP_60, -padWidth_60 // 2, -padLength_60 // 2, padWidth_60, padLength_60, 0, ZA)
-e = BP_60.addCellref(BP_M3_Via_60, point(0, padLength_60 // 2 - 2500))
-e = BP_60.addCellref(BP_M3_Via_60, point(0, -padLength_60 // 2 + 2500))
+e = BP_60.addCellref(BP_M3_Via_60, point(0, padLength_60 // 2 - 3000))
+e = BP_60.addCellref(BP_M3_Via_60, point(0, -padLength_60 // 2 + 3000))
 
 #   Bump Pad_Cell
 BCell = NewCell("BumpPad")
@@ -1079,20 +1111,22 @@ ACMetx = [30000, 60000]  # 50 and 100 micron pad size
 ACMety = [30000, 60000]
 ACPitch_M1X = [2000, 2000]  # metal pitch (for 50% coverage)
 ACPitch_M2Y = [8000, 8000]
-
+# list of electrode metal [50um][100um] [electrode width, M1 weidth, M2-3 width, rows]
 Metal_list = [[[31000, 1000, 2000, 11], [31000, 1000, 2000, 11], [31000, 1000, 2000, 11]],
               [[61000, 1000, 2000, 21], [61000, 1000, 2000, 21], [61000, 1000, 2000, 21]]]
+# Metal layers (M1, M2, M3)
 mlayer = [43, 47, 49]
 
 name = ["ACPad_50", "ACPad_100"]
 aname = ["AC_Array_50", "AC_Array_100"]
+# Vias [ no CA, V1, V2]
 Via_list = [empty_cell, Via_List[0], Via_List[1]]
 #  fill rows, columns for 50, 100 micron
-NFill = [[6, 2, 2],[8, 4, 4]]
+NFill = [[25, 6, 6],[50, 12, 12]]
 # Nfill = [8, 4, 4]
 for i in range(len(name)):
-    BSide = Pitch[i] - Metal_list[i][0][0]
-    print(BSide)
+    BSide = Metal_list[i][0][0]
+    # print(BSide)
     cd = NewCell(name[i])
     Len_XY = [ACMetx[i], ACMety[i]]
 
@@ -1106,6 +1140,11 @@ for i in range(len(name)):
     ly = Pitch[i]
     e = cd.addBox(x, y, lx, ly, OTL)
 
+    # add fill
+    FCname = name[i] + "_Fill"
+    Fill = makeACFill(FCname, NFill[i], Pad_List, Pad_Widths, BSide, Pitch[i])
+    e = cd.addCellref(Fill, point(0, 0))
+
     apad = NewCell(aname[i])
     xoff = -(((NPXRow[i]) - 1) * Pitch[i]) // 2
     yoff = -(((NPXCol[i]) - 1) * Pitch[i]) // 2
@@ -1113,12 +1152,6 @@ for i in range(len(name)):
     poff = point(xoff + Pitch[i], yoff + Pitch[i])
     e = apad.addCellrefArray(cd, pref, poff, NPXRow[i], NPXCol[i])
     e = cd.addCellref(M3ZG, point(0, 0))
-    # add fill
-    FCname = name[i] + "_Fill"
-
-    Fill = makeFillCell(FCname, NFill[i], Pad_List, Pad_Widths, BSide, pref, NPXRow[i], Pitch[i])
-    #def def makeFillCell(FCname, NFill, Pad_Metal, Pad_Space, Bot_point, NXY, FCPitch):
-    e = apad.addCellref(Fill, point(0, 0))
 
 
 
@@ -1158,11 +1191,11 @@ erdrawOD(cjte, xm, ym, JTEInset, JTEWidth, ND, JTERound, OD, OD_inset)
 #	Psubstrate Contact
 #
 PSWid = 50000  # width of contact in cell
-PSubS = NewCell("PSubC")
-PSubS.addBox(-XYCell_2, -XYCell_2, PSWid, XYCell, PSB)
-PSubS.addBox(-XYCell_2, XYCell_2 - PSWid, XYCell, PSWid, PSB)
-PSubS.addBox(XYCell_2 - PSWid, -XYCell_2, PSWid, XYCell, PSB)
-PSubS.addBox(-XYCell_2, -XYCell_2, XYCell, PSWid, PSB)
+# PSubS = NewCell("PSubC")
+# PSubS.addBox(-XYCell_2, -XYCell_2, PSWid, XYCell, PSB)
+# PSubS.addBox(-XYCell_2, XYCell_2 - PSWid, XYCell, PSWid, PSB)
+# PSubS.addBox(XYCell_2 - PSWid, -XYCell_2, PSWid, XYCell, PSB)
+# PSubS.addBox(-XYCell_2, -XYCell_2, XYCell, PSWid, PSB)
 #
 #	Cell Outline
 #
@@ -1182,7 +1215,7 @@ for i in range(len(AC_Type)):
     Assy_AC = NewCell(cname)
     ACPName = "AC_Array_" + AC_Type[i]
     #	print(ACPName)
-    clist = ["AC_Layer", ACPName, cotl, "JTE", "PSubC", "Gain_Layer", Border_List[i]]
+    clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", Border_List[i]]
     makeAssy(Assy_AC, clist)
     CellList.append(cname)
 #
@@ -1193,7 +1226,7 @@ for i in range(len(DJ_Type)):
     cname = "AssyDJ_" + DJ_Type[i]
     Assy_DJ = NewCell(cname)
     DJPName = "DJA_" + DJ_Type[i]
-    clist = [DJPName, cotl, "JTE", "PSubC", "DJ_PN", Border_List[i]]
+    clist = [DJPName, cotl, "JTE", "DJ_PN", Border_List[i]]
     makeAssy(Assy_DJ, clist)
     CellList.append(cname)
 
@@ -1207,13 +1240,13 @@ for i in range(1):
         #        border = "empty"
         djimp = "empty"
     STX_Ass = NewCell(cname)
-    clist = ("PSubC", Strip_Arrays[i], border)
+    clist = (Strip_Arrays[i], border)
     makeAssy(STX_Ass, clist)
     CellList.append(cname)
 
 cnam = "AssyRT"
 RTAss = NewCell(cnam)
-clist = (RTCname, "PSubC", "6mm_with_pads")
+clist = (RTCname, "6mm_with_pads")
 makeAssy(RTAss, clist)
 CellList.append(cnam)
 
@@ -1221,7 +1254,7 @@ for i in range(len(DJ_Type)):
     cname = "AssyDJ_NB_" + DJ_Type[i]
     Assy_DJ_NB = NewCell(cname)
     DJPName = "DJA_" + DJ_Type[i] + "_noBump"
-    clist = [DJPName, cotl, "JTE", "PSubC", "DJ_PN", Border_List[i]]
+    clist = [DJPName, cotl, "JTE", "DJ_PN", Border_List[i]]
     makeAssy(Assy_DJ_NB, clist)
     CellList.append(cname)
 #
@@ -1273,7 +1306,7 @@ from pathlib import Path
 
 home_directory = Path.home()
 # print(home_directory)
-gdsversion = "20.2"
+gdsversion = "20_r4"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 # print(gdsfile)
 l.drawing.saveFile(gdsfile)
