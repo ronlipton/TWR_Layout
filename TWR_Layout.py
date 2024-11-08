@@ -230,7 +230,7 @@ import math
 def DrawBump(BP, len, layer):
     angle = 0.785398
     sangle = angle/2
-    grid = 50
+    grid = 5
     radius = float(len)/math.cos(sangle)
 #    radius = len//math.cos(sangle)
     vertices = [(roundGrid(radius * math.cos(i * angle - sangle), grid), \
@@ -451,6 +451,13 @@ def is_outside(x, y, z, a):
     else:
         return False  # The box is inside
 
+def M1M2M3Fill(Cellname):
+	dr.setCell(Cellname)
+	dr.densityFill(43,25.000000,1000,1000,1000,2000)
+	dr.densityFill(47,25.000000,2000,2000,2000,4000)
+	dr.densityFill(49,25.000000,2000,2000,2000,4000)
+	dr.deselectAll()
+	return
 
 import LayoutScript
 from LayoutScript import *
@@ -471,7 +478,9 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #
 #   Import SLAC portions
 #
-dr.importFile("/Users/ronlipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v9_r2.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v9_r2.gds")
+
+CellFill = True
 
 OTL = 0  # outline for drawing
 OD = 1  # Defines active window
@@ -519,6 +528,14 @@ XYCell_2 = XYCell // 2
 NCellx = 4
 NCelly = 5
 
+# define outlines
+OTL_names = ["OTL_50", "OTL_100"]
+PCell_Outline=[]
+for i in range(len(OTL_names)):
+    e = NewCell(OTL_names[i])
+    e.addBox(-Pitch[i]//2, -Pitch[i]//2, Pitch[i], Pitch[i], OTL)
+    PCell_Outline.append(e)
+
 # Active dimension of pixel arays
 Length_2 = 2500000  # half length of chip
 Lng = 2 * Length_2
@@ -528,7 +545,7 @@ length = [Lng]
 RTRow = 8
 RTCol = 8
 # RT LGAD Pitch
-RTPitch = [600000, 600000]  # need to replace x, y (below) by an index
+# RTPitch = [600000, 600000]  # need to replace x, y (below) by an index
 RTPitchx = 600000
 RTPitchy = 600000
 # RT inter pixel gap
@@ -629,7 +646,6 @@ for i in range(len(Via_Cells)):
         Via_List.append(ml)
     else:
         Via_List.append(ml4x4)
-#    print(Via_List[i])
 
 BP_M3_Via_80 = NewCell("BP_M3_via80")
 BPM3Width = 73000
@@ -699,6 +715,7 @@ M3ZG.addCellref(BCell, point(0, 0))
 
 ntype = 3
 CA_Contact = l.drawing.findCell("Contact_4x4")
+
 
 ##############################################
 #  make DC strxcel
@@ -917,10 +934,6 @@ for i in range(len(Strip_Pitch)):
             astr.addCellref(cacp, point(0, 0))
             astr.addCellref(cacc, point(0, 0))
 
-    #        pref = point(-offset_3mm, -offset_3mm)
-    #        poff = point(offset_3mm, offset_3mm)
-    #        bstr.addCellrefArray(astr, pref, poff, 2, 2)
-
     if (SPitch == 12500):
         astr = NewCell(Strip_name[i] + "_Arr")
         Strip_Arrays.append(Strip_name[i] + "_Arr")
@@ -949,9 +962,7 @@ yoff = -(((NstY) - 1) * Slength) // 2
 #   Staggered pad section - MAKE IT ALL STAGGERED 9/27/24
 #
 # Lower pad
-# pref = point(SPitch//2, yoff-ST_CA_Pitch)
 pref = point(xoff, yoff - ST_CA_Pitch)
-# poff = point(SPitch//2 + SPitch*2 , yoff + Slength - ST_CA_Pitch)
 poff = point(xoff + SPitch * 2, yoff + Slength - ST_CA_Pitch)
 e = Bump_125.addCellrefArray(M23V23Z, pref, poff, NstX // 2, NstY)
 # upper pad
@@ -971,6 +982,7 @@ DJAName = ["DJA_50", "DJA_100"]
 DJMRad = 22000  # Radius of m1 layer
 DJMSur = 5000  # 2 x metal surround of implant
 
+
 Metal_list = [[[37000, 1000, 2000, 13], [37000, 1000, 2000, 13], [37000, 1000, 2000, 13]],
               [[85000, 1000, 2000, 29], [85000, 1000, 2000, 29], [85000, 1000, 2000, 29]]]
 Via_list = [Via_List[0], Via_List[1], CA4x4]
@@ -981,7 +993,8 @@ Len_XY = [Pitch[0] - DJInset, Pitch[0] - DJInset]
 M12_Pitch = [2 * M1_Width, 2 * M2_Width]
 
 for i in range(len(Pitch)):
-    cpad = NewCell(DJName[i] + "Base")
+    cpad_name = DJName[i] + "Base"
+    cpad = NewCell(cpad_name)
     lng = Pitch[i] - DJInset
     e = adddrBoxOD(cpad, -lng // 2, -lng // 2, lng, lng, DJRound, NPL, OD, OD_inset)
     e = adddrBox(cpad, -lng // 2, -lng // 2, lng, lng, DJRound, ND)
@@ -1005,13 +1018,16 @@ for i in range(len(Pitch)):
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
     erdraw(cpad, xm, ym, DJIWid_2, 0, OF, 0)
+    e = cpad.addCellref(PCell_Outline[i],point(0,0))
+    # add fill to cell
+    if(CellFill):
+        e = M1M2M3Fill(cpad_name)
     # cell without central bump
     dpad = NewCell(DJName[i] + "_NoBump")
     e = dpad.addCellref(cpad, point(0, 0))
     # cell with bump
     epad = NewCell(DJName[i])
     e = epad.addCellref(cpad, point(0, 0))
-    #    e = epad.addCellref(M23V23Z, point(0, 0))  # bump in cell  center
     e = epad.addCellref(M3ZG, point(0, 0))  # bump in cell  center
     #
     # pixel array cell
@@ -1107,10 +1123,10 @@ e = RTpad.addCellrefArray(rtpad, pref, poff, RTRow, RTCol)
 ##############################################
 # AC Pads
 # metal dimensions
-ACMetx = [30000, 60000]  # 50 and 100 micron pad size
-ACMety = [30000, 60000]
-ACPitch_M1X = [2000, 2000]  # metal pitch (for 50% coverage)
-ACPitch_M2Y = [8000, 8000]
+#ACMetx = [30000, 60000]  # 50 and 100 micron pad size
+#ACMety = [30000, 60000]
+#ACPitch_M1X = [2000, 2000]  # metal pitch (for 50% coverage)
+#ACPitch_M2Y = [8000, 8000]
 # list of electrode metal [50um][100um] [electrode width, M1 weidth, M2-3 width, rows]
 Metal_list = [[[31000, 1000, 2000, 11], [31000, 1000, 2000, 11], [31000, 1000, 2000, 11]],
               [[61000, 1000, 2000, 21], [61000, 1000, 2000, 21], [61000, 1000, 2000, 21]]]
@@ -1128,7 +1144,7 @@ for i in range(len(name)):
     BSide = Metal_list[i][0][0]
     # print(BSide)
     cd = NewCell(name[i])
-    Len_XY = [ACMetx[i], ACMety[i]]
+#    Len_XY = [ACMetx[i], ACMety[i]]
 
     Ref = make_2dmesh(name[i], Metal_list[i], Pad_Layers, Via_list)
     cd.addCellref(Ref, point(0, 0))
@@ -1228,6 +1244,7 @@ for i in range(len(DJ_Type)):
     DJPName = "DJA_" + DJ_Type[i]
     clist = [DJPName, cotl, "JTE", "DJ_PN", Border_List[i]]
     makeAssy(Assy_DJ, clist)
+#    e = M1M2M3Fill(cname)
     CellList.append(cname)
 
 for i in range(1):
@@ -1306,7 +1323,7 @@ from pathlib import Path
 
 home_directory = Path.home()
 # print(home_directory)
-gdsversion = "20_r4"
+gdsversion = "20_r5"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 # print(gdsfile)
 l.drawing.saveFile(gdsfile)
