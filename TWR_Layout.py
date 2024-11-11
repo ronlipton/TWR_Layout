@@ -459,6 +459,51 @@ def M1M2M3Fill(Cellname):
 	dr.deselectAll()
 	return
 
+
+def makeMeshContact(Cell_name, DXY, LList, SList, LayerList, CList):
+    #
+    #	Makse an XY mesh
+    #	Cell - mesh cell pointer
+    #	DXY - X and Y widths of the contact (modified if necessary top aling with 0,0)
+    #	L - X and Y width of metal
+    #	S - x and Y space
+    #	L - Layer
+    #	CList - list of contact cells (Sub-M1, M1-M2, M2-M3)
+    #
+    Cell = NewCell(Cell_name)
+    for m in range(len(LayerList)):
+        L = LList[m]
+        S = SList[m]
+        Layer = LayerList[m]
+        P = []
+        NXY = []
+        OffXY = []
+        DXY_mod = []
+        for i in range(2):
+            P.append(L[i] + S[i])
+            NMod = (DXY[i] - L[i]) // P[i]
+            NMod = NMod if NMod % 2 == 0 else NMod - 1
+            NXY.append(NMod)
+            OffXY.append((P[i] * NXY[i] + L[i]) // 2)
+
+        Off = -OffXY[0]
+        for i in range(NXY[0] + 1):
+            D = P[1] * (NXY[1] // 2) + L[1] // 2
+            Cell.addBox(Off, -D, L[0], 2 * D, Layer)
+            Off = Off + P[0]
+
+        Off = -OffXY[1]
+        for i in range(NXY[1] + 1):
+            D = P[0] * (NXY[0] // 2) + L[0] // 2
+            Cell.addBox(-D, Off, 2 * D, L[1], Layer)
+            Off = Off + P[1]
+
+        V0 = point(-OffXY[0] + L[0] // 2, -OffXY[1] + L[1] // 2)
+        V1 = point(-OffXY[0] + L[0] // 2 + P[0], -OffXY[1] + L[0] // 2 + P[1])
+        Cell.addCellrefArray(CList[m], V0, V1, NXY[0] + 1, NXY[1] + 1)
+
+    return Cell
+
 import LayoutScript
 from LayoutScript import *
 
@@ -480,7 +525,7 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v9_r2.gds")
 
-CellFill = True
+CellFill = False
 
 OTL = 0  # outline for drawing
 OD = 1  # Defines active window
@@ -729,21 +774,35 @@ empty_cell = NewCell("empty")
 offset_3mm = 1500000
 
 #	strip parameters for 6 and 3mm cells
-Strip_Pitch = [12500, 50000, 50000, 50000, 50000, 100000, 100000, 100000, 100000]
-Strip_Length = [50000, Str_Length, Str_Length, Str_Length, Str_Length, \
+Strip_Pitch = [12500, 50000, 50000, 50000, 50000, 100000, 100000, 100000, 100000,
+               100000, 100000, 100000, 100000]
+Strip_Length = [50000, Str_Length, Str_Length, Str_Length, Str_Length,
+                Str_Length, Str_Length, Str_Length, Str_Length,
                 Str_Length, Str_Length, Str_Length, Str_Length]
-Strip_name = ["Str125", "Str50_DJ", "Str50_DJNPS", "Str50_AC", "Str50_NOGN", \
-              "Str100_DJ", "Str100_DJNPS", "Str100_AC", "Str100_NOGN", ]
 
-Strip_PS = [True, True, False, False, True, True, False, False, True]
-Strip_Contacty = ["Strp125CY", "Strp50CY", "Strp50CY", "Strp50CY", "Strp50CY", \
+
+Strip_name = ["Str125", "Str50_DJ", "Str50_DJNPS", "Str50_AC", "Str50_NOGN",
+              "Str100_DJ", "Str100_DJNPS", "Str100_AC", "Str100_NOGN",
+              "St100_AC20", "St100AC_40", "St100AC_60", "St100AC_80"]
+
+Strip_PS = [True, True, False, False, True, True, False, False, True,
+            False, False, False, False]
+Strip_Contacty = ["Strp125CY", "Strp50CY", "Strp50CY", "Strp50CY", "Strp50CY",
+                  "Strp100CY", "Strp100CY", "Strp100CY", "Strp100CY",
                   "Strp100CY", "Strp100CY", "Strp100CY", "Strp100CY"]
-ConCell = [CA_Contact, CA_Contact, CA_Contact, empty_cell, CA_Contact,
-           CA_Contact, CA_Contact, empty_cell, CA_Contact]
-Imp_Lyr = [NPL, NPL, NPL, 0, NPL, NPL, NPL, 0, NPL]
 
-Border3mm = ["empty", "3mm_with_pads_DJ", "3mm_with_pads_DJ", "3mm_with_pads", "3mm_with_pads", \
-             "3mm_with_pads_DJ", "3mm_with_pads_DJ", "3mm_with_pads", "3mm_with_pads"]
+ConCell = [CA_Contact, CA_Contact, CA_Contact, empty_cell, CA_Contact,
+           CA_Contact, CA_Contact, empty_cell, CA_Contact,
+           empty_cell, empty_cell, empty_cell, empty_cell ]
+Imp_Lyr = [NPL, NPL, NPL, 0, NPL, NPL, NPL, 0, NPL,
+           0, 0, 0, 0]
+
+Border3mm = ["empty", "3mm_with_pads_DJ", "3mm_with_pads_DJ", "3mm_with_pads", "3mm_with_pads",
+             "3mm_with_pads_DJ", "3mm_with_pads_DJ", "3mm_with_pads", "3mm_with_pads",
+             "3mm_with_pads", "3mm_with_pads", "3mm_with_pads", "3mm_with_pads"]
+
+AC_Strip_Index = [3, 7, 9, 10, 11, 12]
+AC_Str_Width = [25000, 75000, 20000, 40000, 60000, 80000]
 
 array_3mm = ["Str50_DJ", "Str50_DJNPS", "Str50_AC", "Str50_NOGN"]
 offx_3mm = [-offset_3mm, -offset_3mm, offset_3mm, offset_3mm]
@@ -757,6 +816,9 @@ ST_CA_Pitch = 10000  # Strip contact pitch
 ST_M1_Pitch = 2000  # strip M1 contact strip Pitch
 SXY_Active = 5000000
 STXY_Active = 2000000
+#   X,Y line width and space for metal layers 1, 2, 3
+LList = [[750, 750], [4000, 4000], [4000, 4000]]
+SList = [[1250, 1250], [6000, 6000], [6000, 6000]]
 
 STRound = 2000  # edge rounding parameter for strips
 STMSurr = 1000
@@ -818,6 +880,10 @@ sgap = 4000
 
 for i in range(len(Strip_Pitch)):
     Strip_imp_width.append(Strip_Pitch[i] - STInset)
+# modify for AC
+for i in range(len(AC_Strip_Index)):
+    j = AC_Strip_Index[i]
+    Strip_imp_width[j] = AC_Str_Width[i]
 
 cellnames_3mm = []
 smwidth = M1_Width
@@ -837,16 +903,22 @@ for i in range(len(Strip_Pitch)):
     #
     #   Add edge field plate
     #
-    ypm = lng // 2 - STRound
-    xpm = wid // 2 - STRound
-    xm = [xpm, -xpm, -xpm, xpm]
-    ym = [ypm, ypm, -ypm, -ypm]
-    erdraw(cd, xm, ym, 1000, 1000, M2, STRound)
+        ypm = lng // 2 - STRound
+        xpm = wid // 2 - STRound
+        xm = [xpm, -xpm, -xpm, xpm]
+        ym = [ypm, ypm, -ypm, -ypm]
+        erdraw(cd, xm, ym, 1000, 1000, M2, STRound)
     #
+    #   Cell boundry for fill
+    e = cd.addBox(-SPitch//2, -Slength//2, SPitch, Slength, OTL)
     #   mesh subroutine
-    Met_Pitch = [ST_CA_Pitch // 5, ST_M1_Pitch]
+    # Met_Pitch = [ST_CA_Pitch // 5, ST_M1_Pitch]
     lxy = [siwidth, lng]
-    ce = Make_M1M2M3_Mesh(Strip_name[i], Pad_Layers, Pad_Widths, Met_Pitch, lxy, ST_CA_Pitch, ConCell[i], Via_List)
+    # ce = Make_M1M2M3_Mesh(Strip_name[i], Pad_Layers, Pad_Widths, Met_Pitch, lxy, ST_CA_Pitch, ConCell[i], Via_List)
+    # cd.addCellref(ce, point(0, 0))
+    MCell_name = Strip_name[i] + "_Electrode"
+    CList = [ConCell[i], Via_List[0], Via_List[1]]
+    ce = makeMeshContact(MCell_name, lxy, LList, SList, Pad_Layers, CList)
     cd.addCellref(ce, point(0, 0))
 
     # P-stop for DC coupled
@@ -862,10 +934,12 @@ for i in range(len(Strip_Pitch)):
         yps = [pslen, pslen, -pslen, -pslen]
         erdraw(cd, xps, yps, pswidth, 0, OF, rad)
     #        cd.addCellref(bpad, point(0, 0))
-
     #      Add bond pads, make array
-    BPinset = 255000
+    BPinset = 249500
     Row2inset = BPinset + 260000
+    # Add fill
+    if(CellFill):
+        e = M1M2M3Fill(cd)
 
     if (SPitch == 100000):
         cd.addCellref(BP_80, point(0, Slength // 2 - BPinset))
@@ -908,7 +982,7 @@ for i in range(len(Strip_Pitch)):
         cd.addCellref(BP_60, point(-25000, -Slength // 2 + BPinset))
         cd.addCellref(BP_60, point(25000, Slength // 2 - Row2inset))
         cd.addCellref(BP_60, point(25000, -Slength // 2 + Row2inset))
-
+#   build array
         bstr = NewCell(Strip_name[i] + "_Arr")
         Strip_Arrays.append(Strip_name[i] + "_Arr")
 
@@ -1122,12 +1196,8 @@ e = RTpad.addCellrefArray(rtpad, pref, poff, RTRow, RTCol)
 
 ##############################################
 # AC Pads
-# metal dimensions
-#ACMetx = [30000, 60000]  # 50 and 100 micron pad size
-#ACMety = [30000, 60000]
-#ACPitch_M1X = [2000, 2000]  # metal pitch (for 50% coverage)
-#ACPitch_M2Y = [8000, 8000]
-# list of electrode metal [50um][100um] [electrode width, M1 weidth, M2-3 width, rows]
+# list of electrode metal [50um][100um] [electrode width, M1 width, M2-3 width, rows]
+# note that we could use makeMeshContact for thgis now 11/10/24
 Metal_list = [[[31000, 1000, 2000, 11], [31000, 1000, 2000, 11], [31000, 1000, 2000, 11]],
               [[61000, 1000, 2000, 21], [61000, 1000, 2000, 21], [61000, 1000, 2000, 21]]]
 # Metal layers (M1, M2, M3)
@@ -1207,11 +1277,6 @@ erdrawOD(cjte, xm, ym, JTEInset, JTEWidth, ND, JTERound, OD, OD_inset)
 #	Psubstrate Contact
 #
 PSWid = 50000  # width of contact in cell
-# PSubS = NewCell("PSubC")
-# PSubS.addBox(-XYCell_2, -XYCell_2, PSWid, XYCell, PSB)
-# PSubS.addBox(-XYCell_2, XYCell_2 - PSWid, XYCell, PSWid, PSB)
-# PSubS.addBox(XYCell_2 - PSWid, -XYCell_2, PSWid, XYCell, PSB)
-# PSubS.addBox(-XYCell_2, -XYCell_2, XYCell, PSWid, PSB)
 #
 #	Cell Outline
 #
@@ -1276,10 +1341,11 @@ for i in range(len(DJ_Type)):
     CellList.append(cname)
 #
 #    Assemble 3mm strip cells
-cells_3mm = ["Assy_str_3mm_50", "Assy_str_3mm_100"]
+cells_3mm = ["Assy_str_3mm_50", "Assy_str_3mm_100", "Assy_ACStr_Elec"]
 cell_3mm_50 = NewCell("Assy_str_3mm_50")
 cell_3mm_100 = NewCell("Assy_str_3mm_100")
-cell3mm_list = [cell_3mm_50, cell_3mm_100]
+cell_3mm_AC = NewCell(cells_3mm[2])
+cell3mm_list = [cell_3mm_50, cell_3mm_100, cell_3mm_AC]
 for i in range(2):
     cname = cells_3mm[i]
     c_3mm = cell3mm_list[i]
@@ -1291,6 +1357,18 @@ for i in range(2):
         c_3mm.addCellref(ccell, point(px, py))
     CellList.append(cname)
     CellList.append(cname)
+#
+#   Add AC pitch variants
+indx=2
+cname = cells_3mm[2]
+c_3mm = cell3mm_list[2]
+for j in range(4):
+    ccell = l.drawing.findCell(cellnames_3mm[4 * indx + j])
+    print(cellnames_3mm[4 * indx + j], i, j)
+    px = offx_3mm[j]
+    py = offy_3mm[j]
+    c_3mm.addCellref(ccell, point(px, py))
+CellList.append(cname)
 
 #	Make Reticule
 #
@@ -1323,7 +1401,7 @@ from pathlib import Path
 
 home_directory = Path.home()
 # print(home_directory)
-gdsversion = "20_r5"
+gdsversion = "21_r1"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 # print(gdsfile)
 l.drawing.saveFile(gdsfile)
