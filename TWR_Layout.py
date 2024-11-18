@@ -451,13 +451,13 @@ def is_outside(x, y, z, a):
     else:
         return False  # The box is inside
 
-def M1M2M3Fill(Cellname):
-	dr.setCell(Cellname)
-	dr.densityFill(43,25.000000,1000,1000,1000,2000)
-	dr.densityFill(47,25.000000,2000,2000,2000,4000)
-	dr.densityFill(49,25.000000,2000,2000,2000,4000)
-	dr.deselectAll()
-	return
+def M1M2M3Fill(Cellname, Layers, Density, SSpace, MWidth, MSpace, FSize):
+    dr.setCell(Cellname)
+    print(" Filling " + Cellname)
+    for i in range(len(Layers)):
+        dr.densityFill(Layers[i], Density[i], SSpace[i], MWidth[i], MSpace[i], FSize[i])
+    dr.deselectAll()
+    return True
 
 
 def makeMeshContact(Cell_name, DXY, LList, SList, LayerList, CList):
@@ -639,6 +639,21 @@ M3_Width_2 = 2000
 M1_Width = 2 * M1_Width_2
 M2_Width = 2 * M2_Width_2
 M3_Width = 2 * M3_Width_2
+
+#   Default fill parameters
+FLayers = [ 43, 47, 49]
+FDensity = [ 25, 25, 25]
+FOffset = [4000, 4000, 4000]
+FWidth = [500, 2000, 2000]
+FSpace = [ 2000, 4000, 4000]
+FFrame = [10000, 10000, 10000]
+
+# Standard 25% fill cell
+FCell_25 = NewCell("Fill_25pct")
+FCell_25.addBox(-500, -500, 1000, 1000, M1)
+FCell_25.addBox(-500, -500, 1000, 1000, M2)
+FCell_25.addBox(-500, -500, 1000, 1000, M3)
+FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
 
 Pad_Widths = [M1_Width_2, M2_Width_2, M3_Width_2]
 # Max area square pads
@@ -908,13 +923,13 @@ for i in range(len(Strip_Pitch)):
         xm = [xpm, -xpm, -xpm, xpm]
         ym = [ypm, ypm, -ypm, -ypm]
         erdraw(cd, xm, ym, 1000, 1000, M2, STRound)
+    #   Connect FP to mesh 4 micron wide at y=0
+        cd.addBox(-wid//2, -2000, wid, 4000, M2)
     #
     #   Cell boundry for fill
     e = cd.addBox(-SPitch//2, -Slength//2, SPitch, Slength, OTL)
     #   mesh subroutine
-    # Met_Pitch = [ST_CA_Pitch // 5, ST_M1_Pitch]
     lxy = [siwidth, lng]
-    # ce = Make_M1M2M3_Mesh(Strip_name[i], Pad_Layers, Pad_Widths, Met_Pitch, lxy, ST_CA_Pitch, ConCell[i], Via_List)
     # cd.addCellref(ce, point(0, 0))
     MCell_name = Strip_name[i] + "_Electrode"
     CList = [ConCell[i], Via_List[0], Via_List[1]]
@@ -939,7 +954,7 @@ for i in range(len(Strip_Pitch)):
     Row2inset = BPinset + 260000
     # Add fill
     if(CellFill):
-        e = M1M2M3Fill(cd)
+        e = M1M2M3Fill(DCStripn , FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
 
     if (SPitch == 100000):
         cd.addCellref(BP_80, point(0, Slength // 2 - BPinset))
@@ -1095,7 +1110,7 @@ for i in range(len(Pitch)):
     e = cpad.addCellref(PCell_Outline[i],point(0,0))
     # add fill to cell
     if(CellFill):
-        e = M1M2M3Fill(cpad_name)
+        e = M1M2M3Fill(cpad_name, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
     # cell without central bump
     dpad = NewCell(DJName[i] + "_NoBump")
     e = dpad.addCellref(cpad, point(0, 0))
@@ -1156,6 +1171,18 @@ e = adddrBoxOD(rtpad, -lng // 2, -lng // 2, lng, lng, RTRound, NPL, OD, OD_inset
 e = adddrBox(rtpad, -lng // 2, -lng // 2, lng, lng, RTRound, ND)
 e = adddrBoxOD(rtpad, -lng // 2 + RTGin, -lng // 2 + RTGin, lng - 2 * RTGin, lng + -2 * RTGin, RTRound, PGN, OD,
                OD_inset)
+# add fill
+dr.setCell("RTPixel")
+dr.activeLayer=NP
+dr.selectActiveLayer()
+l.booleanTool.setA()
+dr.activeLayer=OTL
+dr.selectActiveLayer()
+l.booleanTool.setB()
+#l.booleanTool.addLayerA(NP)
+#l.booleanTool.addLayerB(OTL)
+l.booleanTool.bMinusADelB()
+dr.fillSelectedShapes("Fill_25pct",0)
 # add JTE
 wbox = lng // 2 - RTGin
 xpm = wbox
@@ -1364,7 +1391,7 @@ cname = cells_3mm[2]
 c_3mm = cell3mm_list[2]
 for j in range(4):
     ccell = l.drawing.findCell(cellnames_3mm[4 * indx + j])
-    print(cellnames_3mm[4 * indx + j], i, j)
+#    print(cellnames_3mm[4 * indx + j], i, j)
     px = offx_3mm[j]
     py = offy_3mm[j]
     c_3mm.addCellref(ccell, point(px, py))
@@ -1401,7 +1428,7 @@ from pathlib import Path
 
 home_directory = Path.home()
 # print(home_directory)
-gdsversion = "21_r1"
+gdsversion = "21_r2"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 # print(gdsfile)
 l.drawing.saveFile(gdsfile)
