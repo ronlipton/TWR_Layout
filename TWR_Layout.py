@@ -504,6 +504,65 @@ def makeMeshContact(Cell_name, DXY, LList, SList, LayerList, CList):
 
     return Cell
 
+def rotate_list(list, k):
+    #
+    # Circular rotate list by k steps
+    # Ensure k is within bounds of the list length
+    return list[-k % len(list):] + list[:-k % len(list)]
+
+
+def Edge_Polygon(Outer, inner):
+    #
+    #	Provide a list of points for an enclosed polygon
+    #	defined by a set of inner and outer points on top
+    #	left corner of a square
+    #
+    Factor = [[1, 1], [-1, 1], [-1, -1], [1, -1]]
+    TList = []
+    ilist = Outer
+    for j in range(len(Factor)):
+        LFact = Factor[j]
+        for i in range(len(Outer)):
+            TLst = [ilist[i][0] * LFact[0], ilist[i][1] * LFact[1]]
+            TList.append(TLst)
+        #			print(TLst)
+        ilist = rotate_list(Outer, j + 1)
+    TList.append(Outer[0])
+
+    jlist = inner
+    for j in range(len(Factor)):
+        LFact = Factor[j]
+        for i in range(len(inner)):
+            TLst = [jlist[i][0] * LFact[0], jlist[i][1] * LFact[1]]
+            TList.append(TLst)
+        jlist = rotate_list(inner, j + 1)
+    TList.append(inner[0])
+    return (TList)
+
+
+def make_filled_cell(fill_cell, fcell_name, inner, outer, layer):
+    #
+    #	Make a fill cell defined by outer and inner top left corner points
+    #	fill_cell - cell reference to the fill
+    #	fcell_name - - name of result cell
+    fcell = NewCell(fcell_name)
+    OFrame = Edge_Polygon(Outer, Inner)
+    #	print(OFrame)
+    dr.activeLayer = layer
+    pa = pointArray()
+    for i in range(len(OFrame)):
+        XF = OFrame[i][0]
+        YF = OFrame[i][1]
+        pa.append(point(XF, YF))
+
+    pa.append(point(OFrame[0][0], OFrame[0][1]))
+    fcell.addPolygon(pa, layer)
+    dr.setCell(fcell)
+    dr.selectAll()
+    dr.fillSelectedShapes(fill_cell, 0)
+
+    return fcell
+
 import LayoutScript
 from LayoutScript import *
 
@@ -758,6 +817,19 @@ M3ZG = NewCell("ZG_Pad")
 M3ZG.addCellref(Pad_List[2], point(0, 0))
 M3ZG.addCellref(Via_List[2], point(0, 0))
 M3ZG.addCellref(BCell, point(0, 0))
+
+#   Fill Cells
+FillCell = NewCell("Fill_Cell")
+FillCell.addBox(-500, -500, 1000, 1000, M1)
+FillCell.addBox(-500, -500, 1000, 1000, M2)
+FillCell.addBox(-500, -500, 1000, 1000, M3)
+FillCell.addBox(-1250, -1250, 2500, 2500, OTL)
+#   RT Fill
+Outer = [[-2516000, 2512000],[-2512000, 2516000]]
+Inner = [[-2346000, 2336000],[-2336000, 2346000]]
+#OFrame = Edge_Polygon(Outer, Inner)
+
+fcell_RT = make_filled_cell("Fill_Cell", "Fill_Cell_RT", Inner, Outer, OTL )
 
 # Letters = []
 # CNames = "abcdefghijklmn"
@@ -1428,7 +1500,7 @@ from pathlib import Path
 
 home_directory = Path.home()
 # print(home_directory)
-gdsversion = "21_r2"
+gdsversion = "22_r0"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 # print(gdsfile)
 l.drawing.saveFile(gdsfile)
