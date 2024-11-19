@@ -520,6 +520,7 @@ def Edge_Polygon(Outer, inner):
     Factor = [[1, 1], [-1, 1], [-1, -1], [1, -1]]
     TList = []
     ilist = Outer
+    # print(Outer)
     for j in range(len(Factor)):
         LFact = Factor[j]
         for i in range(len(Outer)):
@@ -546,8 +547,8 @@ def make_filled_cell(fill_cell, fcell_name, inner, outer, layer):
     #	fill_cell - cell reference to the fill
     #	fcell_name - - name of result cell
     fcell = NewCell(fcell_name)
-    OFrame = Edge_Polygon(Outer, Inner)
-    #	print(OFrame)
+    OFrame = Edge_Polygon(outer, inner)
+    #print(OFrame)
     dr.activeLayer = layer
     pa = pointArray()
     for i in range(len(OFrame)):
@@ -584,7 +585,7 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v9_r2.gds")
 
-CellFill = False
+CellFill = True
 
 OTL = 0  # outline for drawing
 OD = 1  # Defines active window
@@ -824,12 +825,23 @@ FillCell.addBox(-500, -500, 1000, 1000, M1)
 FillCell.addBox(-500, -500, 1000, 1000, M2)
 FillCell.addBox(-500, -500, 1000, 1000, M3)
 FillCell.addBox(-1250, -1250, 2500, 2500, OTL)
-#   RT Fill
-Outer = [[-2516000, 2512000],[-2512000, 2516000]]
-Inner = [[-2346000, 2336000],[-2336000, 2346000]]
-#OFrame = Edge_Polygon(Outer, Inner)
 
-fcell_RT = make_filled_cell("Fill_Cell", "Fill_Cell_RT", Inner, Outer, OTL )
+#   RT Fill
+#Outer = [[-2516000, 2512000],[-2512000, 2516000]]
+#Inner = [[-2346000, 2336000],[-2336000, 2346000]]
+#OFrame = Edge_Polygon(Outer, Inner)
+# Fill cells for edge of array
+EFill_Cells = ["RT_Fill", "Str_Fill", "ACPxl_Fill","DJPxl_Fill"]
+Inner =[[-2402000, 2402000]],\
+[[ -998000, 1004000], [-1004000,  998000]],\
+[[-2502000, 2498000], [-2498000, 2502000]],\
+[[-2498000, 2492000], [-2492000, 2498000]]
+Outer = [[-2506000, 2506000]],\
+[[-1018000, 1012000], [-1012000, 1018000]],\
+[[-2518000, 2508000], [-2508000, 2518000]],\
+[[-2518000, 2508000], [-2508000,2518000]]
+for i in range(len(EFill_Cells)):
+    fcell_RT = make_filled_cell("Fill_Cell", EFill_Cells[i], Inner[i], Outer[i], OTL )
 
 # Letters = []
 # CNames = "abcdefghijklmn"
@@ -1046,6 +1058,9 @@ for i in range(len(Strip_Pitch)):
         pref = point(xoff, yoff)
         poff = point(xoff + SPitch, yoff + Slength)
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
+        # Add fill
+        fref = l.drawing.findCell("Str_Fill")
+        e = astr.addCellref(fref , point(0, 0))
         # Add border
         bref = l.drawing.findCell(Border3mm[i])
         e = astr.addCellref(bref, point(0, 0))
@@ -1084,6 +1099,9 @@ for i in range(len(Strip_Pitch)):
         pref = point(xoff, yoff)
         poff = point(xoff + (SPitch * 2), yoff + Slength)
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
+        # Add fill
+        fref = l.drawing.findCell("Str_Fill")
+        e = astr.addCellref(fref , point(0, 0))
         # Add border
         bref = l.drawing.findCell(Border3mm[i])
         e = astr.addCellref(bref, point(0, 0))
@@ -1251,8 +1269,6 @@ l.booleanTool.setA()
 dr.activeLayer=OTL
 dr.selectActiveLayer()
 l.booleanTool.setB()
-#l.booleanTool.addLayerA(NP)
-#l.booleanTool.addLayerB(OTL)
 l.booleanTool.bMinusADelB()
 dr.fillSelectedShapes("Fill_25pct",0)
 # add JTE
@@ -1395,7 +1411,7 @@ for i in range(len(AC_Type)):
     Assy_AC = NewCell(cname)
     ACPName = "AC_Array_" + AC_Type[i]
     #	print(ACPName)
-    clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", Border_List[i]]
+    clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", "ACPxl_Fill", Border_List[i]]
     makeAssy(Assy_AC, clist)
     CellList.append(cname)
 #
@@ -1406,7 +1422,7 @@ for i in range(len(DJ_Type)):
     cname = "AssyDJ_" + DJ_Type[i]
     Assy_DJ = NewCell(cname)
     DJPName = "DJA_" + DJ_Type[i]
-    clist = [DJPName, cotl, "JTE", "DJ_PN", Border_List[i]]
+    clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill",Border_List[i]]
     makeAssy(Assy_DJ, clist)
 #    e = M1M2M3Fill(cname)
     CellList.append(cname)
@@ -1427,7 +1443,7 @@ for i in range(1):
 
 cnam = "AssyRT"
 RTAss = NewCell(cnam)
-clist = (RTCname, "6mm_with_pads")
+clist = (RTCname, "6mm_with_pads", "RT_Fill")
 makeAssy(RTAss, clist)
 CellList.append(cnam)
 
@@ -1435,7 +1451,7 @@ for i in range(len(DJ_Type)):
     cname = "AssyDJ_NB_" + DJ_Type[i]
     Assy_DJ_NB = NewCell(cname)
     DJPName = "DJA_" + DJ_Type[i] + "_noBump"
-    clist = [DJPName, cotl, "JTE", "DJ_PN", Border_List[i]]
+    clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", Border_List[i]]
     makeAssy(Assy_DJ_NB, clist)
     CellList.append(cname)
 #
