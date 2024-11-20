@@ -229,12 +229,12 @@ import math
 
 def DrawBump(BP, len, layer):
     angle = 0.785398
-    sangle = angle/2
+    sangle = angle / 2
     grid = 5
-    radius = float(len)/math.cos(sangle)
-#    radius = len//math.cos(sangle)
+    radius = float(len) / math.cos(sangle)
+    #    radius = len//math.cos(sangle)
     vertices = [(roundGrid(radius * math.cos(i * angle - sangle), grid), \
-                roundGrid(radius * math.sin(i * angle - sangle), grid)) for i in range(8)]
+                 roundGrid(radius * math.sin(i * angle - sangle), grid)) for i in range(8)]
     vertices.append(vertices[0])
     # print(vertices)
     pts = pointArray()
@@ -387,8 +387,10 @@ def make_EdgeArray(Cname, BCell, ECell, NX, NY, DX, DY):
     dcell.addCellrefArray(BCell, p1, p2, 1, NY - 2)
     return dcell
 
+
 def roundGrid(x, grid):
-    return int(math.ceil((x-(grid//2))/float(grid))) * grid
+    return int(math.ceil((x - (grid // 2)) / float(grid))) * grid
+
 
 # import numpy as np
 def makeFillCell(FCname, NFill, Pad_Metal, Pad_Width, BSide, Bot_point, NXY, FCpitch):
@@ -400,37 +402,38 @@ def makeFillCell(FCname, NFill, Pad_Metal, Pad_Width, BSide, Bot_point, NXY, FCp
     # Pad_Metal list of m1-3 pads
     # Bot_point - anchor point of parent array
     rcell = NewCell(FCname)
-    fcell = NewCell(FCname+"_square")
-    fcell.addBox(-BSide//2, -BSide//2, BSide, BSide, OTL)
+    fcell = NewCell(FCname + "_square")
+    fcell.addBox(-BSide // 2, -BSide // 2, BSide, BSide, OTL)
     for i in range(len(Pad_Metal)):
-        spacing = roundGrid((BSide-NFill[i]*2*Pad_Width[i]) / (NFill[i] + 1), 50)
-        fpitch = 2*Pad_Width[i] + spacing
-        #p1 = point(-fpitch*NFill[i]/2, -fpitch*NFill[i]/2)
-        p1 = point(-BSide//2+Pad_Width[i]+spacing, -BSide//2+Pad_Width[i]+spacing)
-        p2 = point(p1.x()+fpitch, p1.y()+fpitch)
+        spacing = roundGrid((BSide - NFill[i] * 2 * Pad_Width[i]) / (NFill[i] + 1), 50)
+        fpitch = 2 * Pad_Width[i] + spacing
+        # p1 = point(-fpitch*NFill[i]/2, -fpitch*NFill[i]/2)
+        p1 = point(-BSide // 2 + Pad_Width[i] + spacing, -BSide // 2 + Pad_Width[i] + spacing)
+        p2 = point(p1.x() + fpitch, p1.y() + fpitch)
         fcell.addCellrefArray(Pad_Metal[i], p1, p2, NFill[i], NFill[i])
-    V0 = point(Bot_point.x()-FCpitch//2, Bot_point.y()-FCpitch//2)
-    V1 = point(V0.x()+FCpitch, V0.y()+FCpitch//2)
+    V0 = point(Bot_point.x() - FCpitch // 2, Bot_point.y() - FCpitch // 2)
+    V1 = point(V0.x() + FCpitch, V0.y() + FCpitch // 2)
 
-    H0 = point(Bot_point.x()-FCpitch//2, Bot_point.y()-FCpitch//2)
-    H1 = point(H0.x()+FCpitch//2, H0.y()+FCpitch)
-    rcell.addCellrefArray(fcell, V0, V1, NXY+1, 2*(NXY)+1)
-    rcell.addCellrefArray(fcell, H0, H1, 2*NXY+1, (NXY)+1)
+    H0 = point(Bot_point.x() - FCpitch // 2, Bot_point.y() - FCpitch // 2)
+    H1 = point(H0.x() + FCpitch // 2, H0.y() + FCpitch)
+    rcell.addCellrefArray(fcell, V0, V1, NXY + 1, 2 * (NXY) + 1)
+    rcell.addCellrefArray(fcell, H0, H1, 2 * NXY + 1, (NXY) + 1)
     return rcell
 
-#Fill = makeACFill(FCname, NFill[i], Pad_List, Pad_Widths, BSide, Pitch[i])
+
+# Fill = makeACFill(FCname, NFill[i], Pad_List, Pad_Widths, BSide, Pitch[i])
 def makeACFill(FCname, NFill, Pad_List, Pad_Widths, BSide, Pitch):
     fcell = NewCell(FCname)
     for i in range(len(NFill)):
-        width = Pad_Widths[i]*2
-        space = roundGrid(Pitch/NFill[i], 50)
+        width = Pad_Widths[i] * 2
+        space = roundGrid(Pitch / NFill[i], 50)
         for jx in range(NFill[i]):
             for jy in range(NFill[i]):
-                xbox = -Pitch//2 +space//2 +jx*space
-                ybox = -Pitch//2 +space//2 +jy*space
+                xbox = -Pitch // 2 + space // 2 + jx * space
+                ybox = -Pitch // 2 + space // 2 + jy * space
                 ref = point(xbox, ybox)
-                if is_outside(xbox,ybox, width, BSide+2000):
-                    fcell.addCellref(Pad_List[i],ref)
+                if is_outside(xbox, ybox, width, BSide + 2000):
+                    fcell.addCellref(Pad_List[i], ref)
     return fcell
 
 
@@ -446,10 +449,11 @@ def is_outside(x, y, z, a):
     max_y = y + half_z
 
     # Check if any boundary exceeds the larger box's boundaries
-    if (min_x > half_a) or (max_x < -half_a) or (min_y > half_a) or (max_y < -half_a) :
+    if (min_x > half_a) or (max_x < -half_a) or (min_y > half_a) or (max_y < -half_a):
         return True  # The box is outside
     else:
         return False  # The box is inside
+
 
 def M1M2M3Fill(Cellname, Layers, Density, SSpace, MWidth, MSpace, FSize):
     dr.setCell(Cellname)
@@ -504,6 +508,7 @@ def makeMeshContact(Cell_name, DXY, LList, SList, LayerList, CList):
 
     return Cell
 
+
 def rotate_list(list, k):
     #
     # Circular rotate list by k steps
@@ -548,7 +553,7 @@ def make_filled_cell(fill_cell, fcell_name, inner, outer, layer):
     #	fcell_name - - name of result cell
     fcell = NewCell(fcell_name)
     OFrame = Edge_Polygon(outer, inner)
-    #print(OFrame)
+    # print(OFrame)
     dr.activeLayer = layer
     pa = pointArray()
     for i in range(len(OFrame)):
@@ -563,6 +568,7 @@ def make_filled_cell(fill_cell, fcell_name, inner, outer, layer):
     dr.fillSelectedShapes(fill_cell, 0)
 
     return fcell
+
 
 import LayoutScript
 from LayoutScript import *
@@ -583,7 +589,7 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #
 #   Import SLAC portions
 #
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v9_r2.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v11_r2.gds")
 
 CellFill = True
 
@@ -610,11 +616,11 @@ CA = 25  # contact
 DJP = 18  # Deep junction p IMPLANT (PX)
 DJN = 16  # Deep junction n IMPLANT (DW?)
 PSB = 21  # p substrate contact IMPLANT (PD??)
-PD = 21 # p contact implant
+PD = 21  # p contact implant
 # PST = 117  # p stop (NC)
 ND = 19  # n contact IMPLANT
 PW = 78  # P-well IMPLANT
-OF = 122 # pixel isolation
+OF = 122  # pixel isolation
 
 # inset of active
 OD_inset = 120
@@ -635,10 +641,10 @@ NCelly = 5
 
 # define outlines
 OTL_names = ["OTL_50", "OTL_100"]
-PCell_Outline=[]
+PCell_Outline = []
 for i in range(len(OTL_names)):
     e = NewCell(OTL_names[i])
-    e.addBox(-Pitch[i]//2, -Pitch[i]//2, Pitch[i], Pitch[i], OTL)
+    e.addBox(-Pitch[i] // 2, -Pitch[i] // 2, Pitch[i], Pitch[i], OTL)
     PCell_Outline.append(e)
 
 # Active dimension of pixel arays
@@ -701,11 +707,11 @@ M2_Width = 2 * M2_Width_2
 M3_Width = 2 * M3_Width_2
 
 #   Default fill parameters
-FLayers = [ 43, 47, 49]
-FDensity = [ 25, 25, 25]
+FLayers = [43, 47, 49]
+FDensity = [25, 25, 25]
 FOffset = [4000, 4000, 4000]
 FWidth = [500, 2000, 2000]
-FSpace = [ 2000, 4000, 4000]
+FSpace = [2000, 4000, 4000]
 FFrame = [10000, 10000, 10000]
 
 # Standard 25% fill cell
@@ -773,12 +779,14 @@ BPM3Width = 73000
 BPM3Length = 2000
 ZGM3_ovr = 2000
 e = adddrBox(BP_M3_Via_80, -BPM3Width // 2, -BPM3Length // 2, BPM3Width, BPM3Length, 0, ZG)
-e = adddrBox(BP_M3_Via_80, -BPM3Width // 2 - ZGM3_ovr, -BPM3Length // 2- ZGM3_ovr, BPM3Width + 2*ZGM3_ovr, BPM3Length+2*ZGM3_ovr, 0, M3)
+e = adddrBox(BP_M3_Via_80, -BPM3Width // 2 - ZGM3_ovr, -BPM3Length // 2 - ZGM3_ovr, BPM3Width + 2 * ZGM3_ovr,
+             BPM3Length + 2 * ZGM3_ovr, 0, M3)
 BP_M3_Via_60 = NewCell("BP_M3_via60")
 BPM3Width = 42000
-#BPM3Length = 3000
+# BPM3Length = 3000
 e = adddrBox(BP_M3_Via_60, -BPM3Width // 2, -BPM3Length // 2, BPM3Width, BPM3Length, 0, ZG)
-e = adddrBox(BP_M3_Via_60, -BPM3Width // 2 - ZGM3_ovr, -BPM3Length // 2- ZGM3_ovr, BPM3Width + 2*ZGM3_ovr, BPM3Length+2*ZGM3_ovr, 0, M3)
+e = adddrBox(BP_M3_Via_60, -BPM3Width // 2 - ZGM3_ovr, -BPM3Length // 2 - ZGM3_ovr, BPM3Width + 2 * ZGM3_ovr,
+             BPM3Length + 2 * ZGM3_ovr, 0, M3)
 
 # 80 micron bond pad
 BP_80 = NewCell("Bond_Pad_80")
@@ -827,21 +835,21 @@ FillCell.addBox(-500, -500, 1000, 1000, M3)
 FillCell.addBox(-1250, -1250, 2500, 2500, OTL)
 
 #   RT Fill
-#Outer = [[-2516000, 2512000],[-2512000, 2516000]]
-#Inner = [[-2346000, 2336000],[-2336000, 2346000]]
-#OFrame = Edge_Polygon(Outer, Inner)
+# Outer = [[-2516000, 2512000],[-2512000, 2516000]]
+# Inner = [[-2346000, 2336000],[-2336000, 2346000]]
+# OFrame = Edge_Polygon(Outer, Inner)
 # Fill cells for edge of array
-EFill_Cells = ["RT_Fill", "Str_Fill", "ACPxl_Fill","DJPxl_Fill"]
-Inner =[[-2402000, 2402000]],\
-[[ -998000, 1004000], [-1004000,  998000]],\
-[[-2502000, 2498000], [-2498000, 2502000]],\
-[[-2498000, 2492000], [-2492000, 2498000]]
-Outer = [[-2506000, 2506000]],\
-[[-1018000, 1012000], [-1012000, 1018000]],\
-[[-2518000, 2508000], [-2508000, 2518000]],\
-[[-2518000, 2508000], [-2508000,2518000]]
+EFill_Cells = ["RT_Fill", "Str_Fill", "ACPxl_Fill", "DJPxl_Fill"]
+Inner = [[-2402000, 2402000]], \
+    [[-998000, 1004000], [-1004000, 998000]], \
+    [[-2502000, 2498000], [-2498000, 2502000]], \
+    [[-2498000, 2492000], [-2492000, 2498000]]
+Outer = [[-2506000, 2506000]], \
+    [[-1018000, 1012000], [-1012000, 1018000]], \
+    [[-2518000, 2508000], [-2508000, 2518000]], \
+    [[-2518000, 2508000], [-2508000, 2518000]]
 for i in range(len(EFill_Cells)):
-    fcell_RT = make_filled_cell("Fill_Cell", EFill_Cells[i], Inner[i], Outer[i], OTL )
+    fcell_RT = make_filled_cell("Fill_Cell", EFill_Cells[i], Inner[i], Outer[i], OTL)
 
 # Letters = []
 # CNames = "abcdefghijklmn"
@@ -859,7 +867,6 @@ for i in range(len(EFill_Cells)):
 
 ntype = 3
 CA_Contact = l.drawing.findCell("Contact_4x4")
-
 
 ##############################################
 #  make DC strxcel
@@ -879,7 +886,6 @@ Strip_Length = [50000, Str_Length, Str_Length, Str_Length, Str_Length,
                 Str_Length, Str_Length, Str_Length, Str_Length,
                 Str_Length, Str_Length, Str_Length, Str_Length]
 
-
 Strip_name = ["Str125", "Str50_DJ", "Str50_DJNPS", "Str50_AC", "Str50_NOGN",
               "Str100_DJ", "Str100_DJNPS", "Str100_AC", "Str100_NOGN",
               "St100_AC20", "St100AC_40", "St100AC_60", "St100AC_80"]
@@ -892,7 +898,7 @@ Strip_Contacty = ["Strp125CY", "Strp50CY", "Strp50CY", "Strp50CY", "Strp50CY",
 
 ConCell = [CA_Contact, CA_Contact, CA_Contact, empty_cell, CA_Contact,
            CA_Contact, CA_Contact, empty_cell, CA_Contact,
-           empty_cell, empty_cell, empty_cell, empty_cell ]
+           empty_cell, empty_cell, empty_cell, empty_cell]
 Imp_Lyr = [NPL, NPL, NPL, 0, NPL, NPL, NPL, 0, NPL,
            0, 0, 0, 0]
 
@@ -999,19 +1005,19 @@ for i in range(len(Strip_Pitch)):
     e = adddrBoxOD(cd, -wid // 2, -lng // 2, wid, lng, STRound, Imp_Lyr[i], OD, OD_inset)
     if Imp_Lyr[i] == NPL:
         e = adddrBox(cd, -wid // 2, -lng // 2, wid, lng, STRound, ND)
-    #
-    #   Add edge field plate
-    #
+        #
+        #   Add edge field plate
+        #
         ypm = lng // 2 - STRound
         xpm = wid // 2 - STRound
         xm = [xpm, -xpm, -xpm, xpm]
         ym = [ypm, ypm, -ypm, -ypm]
         erdraw(cd, xm, ym, 1000, 1000, M2, STRound)
-    #   Connect FP to mesh 4 micron wide at y=0
-        cd.addBox(-wid//2, -2000, wid, 4000, M2)
+        #   Connect FP to mesh 4 micron wide at y=0
+        cd.addBox(-wid // 2, -2000, wid, 4000, M2)
     #
     #   Cell boundry for fill
-    e = cd.addBox(-SPitch//2, -Slength//2, SPitch, Slength, OTL)
+    e = cd.addBox(-SPitch // 2, -Slength // 2, SPitch, Slength, OTL)
     #   mesh subroutine
     lxy = [siwidth, lng]
     # cd.addCellref(ce, point(0, 0))
@@ -1037,8 +1043,8 @@ for i in range(len(Strip_Pitch)):
     BPinset = 249500
     Row2inset = BPinset + 260000
     # Add fill
-    if(CellFill):
-        e = M1M2M3Fill(DCStripn , FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
+    if (CellFill):
+        e = M1M2M3Fill(DCStripn, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
 
     if (SPitch == 100000):
         cd.addCellref(BP_80, point(0, Slength // 2 - BPinset))
@@ -1060,7 +1066,7 @@ for i in range(len(Strip_Pitch)):
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
         # Add fill
         fref = l.drawing.findCell("Str_Fill")
-        e = astr.addCellref(fref , point(0, 0))
+        e = astr.addCellref(fref, point(0, 0))
         # Add border
         bref = l.drawing.findCell(Border3mm[i])
         e = astr.addCellref(bref, point(0, 0))
@@ -1084,7 +1090,7 @@ for i in range(len(Strip_Pitch)):
         cd.addCellref(BP_60, point(-25000, -Slength // 2 + BPinset))
         cd.addCellref(BP_60, point(25000, Slength // 2 - Row2inset))
         cd.addCellref(BP_60, point(25000, -Slength // 2 + Row2inset))
-#   build array
+        #   build array
         bstr = NewCell(Strip_name[i] + "_Arr")
         Strip_Arrays.append(Strip_name[i] + "_Arr")
 
@@ -1101,7 +1107,7 @@ for i in range(len(Strip_Pitch)):
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
         # Add fill
         fref = l.drawing.findCell("Str_Fill")
-        e = astr.addCellref(fref , point(0, 0))
+        e = astr.addCellref(fref, point(0, 0))
         # Add border
         bref = l.drawing.findCell(Border3mm[i])
         e = astr.addCellref(bref, point(0, 0))
@@ -1161,7 +1167,6 @@ DJAName = ["DJA_50", "DJA_100"]
 DJMRad = 22000  # Radius of m1 layer
 DJMSur = 5000  # 2 x metal surround of implant
 
-
 Metal_list = [[[37000, 1000, 2000, 13], [37000, 1000, 2000, 13], [37000, 1000, 2000, 13]],
               [[85000, 1000, 2000, 29], [85000, 1000, 2000, 29], [85000, 1000, 2000, 29]]]
 Via_list = [Via_List[0], Via_List[1], CA4x4]
@@ -1197,9 +1202,9 @@ for i in range(len(Pitch)):
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
     erdraw(cpad, xm, ym, DJIWid_2, 0, OF, 0)
-    e = cpad.addCellref(PCell_Outline[i],point(0,0))
+    e = cpad.addCellref(PCell_Outline[i], point(0, 0))
     # add fill to cell
-    if(CellFill):
+    if (CellFill):
         e = M1M2M3Fill(cpad_name, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
     # cell without central bump
     dpad = NewCell(DJName[i] + "_NoBump")
@@ -1242,72 +1247,107 @@ e = adddrBoxOD(cpad, -(djcorner) // 2, -(djcorner) // 2, \
 #
 # Reach through pixel and array
 #
-RTname = "RTPixel"
+##############################################
+#
+# Reach through pixel and array
+#
+# RT inter pixel gap
+RTGap = [100000, 10000]
+RTRound = 5000  # corner rounding radius
+# RTOXRad = 6000
+RTMRad = RTLenx // 4
+
+# Reach through LGAD
+# RT LGAD rows, columns
+RTRow = [8, 50]
+RTCol = [8, 50]
+# RT LGAD Pitch
+# RTPitch = [600000, 600000]  # need to replace x, y (below) by an index
+
+RTPitchx = [600000, 100000]
+RTPitchy = [600000, 100000]
+RTname = ["RTPixel", "RT_100"]
 ## RTMSurr = -10000 # overlap with cathode
 RTPad_inset = 25000
-## RTOin = 30000
 RTGin = 8000  # gain layer inset
-RTCname = "RTArray"
-RT_M1_Lines = []
-RT_M1_Pitch = 2 * M1_Width
-RT_M2_Pitch = 2 * M2_Width
+RTCname = ["RTArray", "RTP100_Array"]
+# RT_M1_Lines = []
+# RT_M1_Pitch = 2 * M1_Width
+# RT_M2_Pitch = 2 * M2_Width
 
-rtpad = NewCell(RTname)
-RTPx_2 = RTPitchx // 2
-RTPy_2 = RTPitchy // 2
-rtpad.addBox(-RTPx_2, -RTPy_2, RTPitchx, RTPitchy, OTL)
-lng = RTPitchx - RTGap
-e = adddrBoxOD(rtpad, -lng // 2, -lng // 2, lng, lng, RTRound, NPL, OD, OD_inset)
-e = adddrBox(rtpad, -lng // 2, -lng // 2, lng, lng, RTRound, ND)
-e = adddrBoxOD(rtpad, -lng // 2 + RTGin, -lng // 2 + RTGin, lng - 2 * RTGin, lng + -2 * RTGin, RTRound, PGN, OD,
-               OD_inset)
-# add fill
-dr.setCell("RTPixel")
-dr.activeLayer=NP
-dr.selectActiveLayer()
-l.booleanTool.setA()
-dr.activeLayer=OTL
-dr.selectActiveLayer()
-l.booleanTool.setB()
-l.booleanTool.bMinusADelB()
-dr.fillSelectedShapes("Fill_25pct",0)
-# add JTE
-wbox = lng // 2 - RTGin
-xpm = wbox
-xm = [xpm, -xpm, -xpm, xpm]
-ym = [xpm, xpm, -xpm, -xpm]
-erdrawOD(rtpad, xm, ym, JTEInset, JTEWidth, JTE, RTRound, OD, OD_inset)
-erdrawOD(rtpad, xm, ym, JTEInset, JTEWidth, JTE, RTRound, ND, OD_inset)
-# erdraw(rtpad, xm, ym, JTEInset-OD_inset, JTEWidth-OD_inset, OD, RTRound)
+Via_list = [Via_List[0], Via_List[1], CA4x4]
+Metal_list = [[[475000, 1000, 2000, 159], [475000, 1000, 2000, 159], [475000, 1000, 2000, 159]], \
+              [[79000, 1000, 2000, 27], [79000, 1000, 2000, 27], [79000, 1000, 2000, 27]]]
 
-RT_Pad_len = lng - 20000
-#
-#   Add contact mesh
-#
-Len_XY = [RT_Pad_len, RT_Pad_len]
-Ref = Make_M1M2M3_Mesh("RT", Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, ST_CA_Pitch, CA4x4, Via_List)
-rtpad.addCellref(Ref, point(0, 0))
-wbox = RTPitchx // 2 - RTRound - PIWid_2
+# RT JTE parameters
+RT_JTERound = [25000, 10000]
+RT_JTEInset = [2000, 2000]
+RT_JTEWidth = [20000, 7000]
 
-# Pad at center
-rtpad.addCellref(BP_80, point(0, 0))
+for i in range(len(RTname)):
+    # RT Active length
+    RTLenx = RTPitchx[i] - RTGap[i]  # active lengths
+    RTLeny = RTPitchy[i] - RTGap[i]
+    rtpad = NewCell(RTname[i])
+    RTPx_2 = RTPitchx[i] // 2
+    RTPy_2 = RTPitchy[i] // 2
+    rtpad.addBox(-RTPx_2, -RTPy_2, RTPitchx[i], RTPitchy[i], OTL)
+    lng = RTPitchx[i] - RTGap[i]
+    e = adddrBoxOD(rtpad, -lng // 2, -lng // 2, lng, lng, RTRound, NPL, OD, OD_inset)
+    e = adddrBox(rtpad, -lng // 2, -lng // 2, lng, lng, RTRound, ND)
+    e = adddrBoxOD(rtpad, -lng // 2 + RTGin, -lng // 2 + RTGin, lng - 2 * RTGin, lng + -2 * RTGin, RTRound, PGN, OD,
+                   OD_inset)
+    # add fill
+    #	if RTname[i] == "RTPixel":
+    dr.setCell(RTname[i])
+    dr.activeLayer = NP
+    dr.selectActiveLayer()
+    l.booleanTool.setA()
+    dr.activeLayer = OTL
+    dr.selectActiveLayer()
+    l.booleanTool.setB()
+    l.booleanTool.bMinusADelB()
+    dr.fillSelectedShapes("Fill_25pct", 0)
+    # add JTE
+    wbox = lng // 2 - RTGin
+    xpm = wbox
+    xm = [xpm, -xpm, -xpm, xpm]
+    ym = [xpm, xpm, -xpm, -xpm]
+    print(str(i) + "  - " + str(xpm))
+    erdrawOD(rtpad, xm, ym, RT_JTEInset[i], RT_JTEWidth[i], JTE, RTRound, OD, OD_inset)
+    #	erdrawOD(rtpad, xm, ym, JTEInset, JTEWidth, JTE, RTRound, ND, OD_inset)
+    # erdraw(rtpad, xm, ym, JTEInset-OD_inset, JTEWidth-OD_inset, OD, RTRound)
 
-xpm = wbox
-xm = [xpm, -xpm, -xpm, xpm]
-ym = [xpm, xpm, -xpm, -xpm]
-erdrawOD(rtpad, xm, ym, PIWid_2, PIWid_2, OF, RTRound, OD, OD_inset)
-# erdraw(rtpad, xm, ym, PIWid_2-OD_inset, PIWid_2-OD_inset, OD, RTRound)
-#
-# Array cell
-#
-# RTpd = l.drawing.addCell()
-# RTpd.thisCell.cellName =  RTCname
-RTpad = NewCell(RTCname)
-xoff = -(((RTRow) - 1) * RTPitchx) // 2
-yoff = -(((RTCol) - 1) * RTPitchy) // 2
-pref = point(xoff, yoff)
-poff = point(xoff + RTPitchx, yoff + RTPitchy)
-e = RTpad.addCellrefArray(rtpad, pref, poff, RTRow, RTCol)
+    RT_Pad_len = lng - 20000
+    #
+    #   Add contact mesh
+    #
+    Len_XY = [RT_Pad_len, RT_Pad_len]
+
+    Ref = make_2dmesh(RTname[i], Metal_list[i], Pad_Layers, Via_list)
+    rtpad.addCellref(Ref, point(0, 0))
+    wbox = RTPitchx[i] // 2 - RTRound - PIWid_2
+
+    # Pad at center
+    if RTname[i] == "RTPixel":
+        rtpad.addCellref(BP_80, point(0, 0))
+    else:
+        rtpad.addCellref(BCell, point(0, 0))
+    # Pixel isolation
+
+    xpm = wbox
+    xm = [xpm, -xpm, -xpm, xpm]
+    ym = [xpm, xpm, -xpm, -xpm]
+    erdrawOD(rtpad, xm, ym, PIWid_2, PIWid_2, OF, RTRound, OD, OD_inset)
+    #
+    # Array cell
+    #
+    RTpad = NewCell(RTname[i] + "_Arry")
+    xoff = -(((RTRow[i]) - 1) * RTPitchx[i]) // 2
+    yoff = -(((RTCol[i]) - 1) * RTPitchy[i]) // 2
+    pref = point(xoff, yoff)
+    poff = point(xoff + RTPitchx[i], yoff + RTPitchy[i])
+    e = RTpad.addCellrefArray(rtpad, pref, poff, RTRow[i], RTCol[i])
 
 ##############################################
 # AC Pads
@@ -1323,13 +1363,13 @@ aname = ["AC_Array_50", "AC_Array_100"]
 # Vias [ no CA, V1, V2]
 Via_list = [empty_cell, Via_List[0], Via_List[1]]
 #  fill rows, columns for 50, 100 micron
-NFill = [[25, 6, 6],[50, 12, 12]]
+NFill = [[25, 6, 6], [50, 12, 12]]
 # Nfill = [8, 4, 4]
 for i in range(len(name)):
     BSide = Metal_list[i][0][0]
     # print(BSide)
     cd = NewCell(name[i])
-#    Len_XY = [ACMetx[i], ACMety[i]]
+    #    Len_XY = [ACMetx[i], ACMety[i]]
 
     Ref = make_2dmesh(name[i], Metal_list[i], Pad_Layers, Via_list)
     cd.addCellref(Ref, point(0, 0))
@@ -1353,8 +1393,6 @@ for i in range(len(name)):
     poff = point(xoff + Pitch[i], yoff + Pitch[i])
     e = apad.addCellrefArray(cd, pref, poff, NPXRow[i], NPXCol[i])
     e = cd.addCellref(M3ZG, point(0, 0))
-
-
 
 # Gain Layer
 # name = "Gain_Layer"
@@ -1422,9 +1460,9 @@ for i in range(len(DJ_Type)):
     cname = "AssyDJ_" + DJ_Type[i]
     Assy_DJ = NewCell(cname)
     DJPName = "DJA_" + DJ_Type[i]
-    clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill",Border_List[i]]
+    clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", Border_List[i]]
     makeAssy(Assy_DJ, clist)
-#    e = M1M2M3Fill(cname)
+    #    e = M1M2M3Fill(cname)
     CellList.append(cname)
 
 for i in range(1):
@@ -1441,17 +1479,12 @@ for i in range(1):
     makeAssy(STX_Ass, clist)
     CellList.append(cname)
 
-cnam = "AssyRT"
-RTAss = NewCell(cnam)
-clist = (RTCname, "6mm_with_pads", "RT_Fill")
-makeAssy(RTAss, clist)
-CellList.append(cnam)
-
+No_Pad_border = ["6mm_50um_pitch_bumps_DJ_ASIL", "6mm_100um_pitch_bumps_DJ_ASIL"]
 for i in range(len(DJ_Type)):
     cname = "AssyDJ_NB_" + DJ_Type[i]
     Assy_DJ_NB = NewCell(cname)
     DJPName = "DJA_" + DJ_Type[i] + "_noBump"
-    clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", Border_List[i]]
+    clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", No_Pad_border[i]]
     makeAssy(Assy_DJ_NB, clist)
     CellList.append(cname)
 #
@@ -1474,16 +1507,24 @@ for i in range(2):
     CellList.append(cname)
 #
 #   Add AC pitch variants
-indx=2
+indx = 2
 cname = cells_3mm[2]
 c_3mm = cell3mm_list[2]
 for j in range(4):
     ccell = l.drawing.findCell(cellnames_3mm[4 * indx + j])
-#    print(cellnames_3mm[4 * indx + j], i, j)
+    #    print(cellnames_3mm[4 * indx + j], i, j)
     px = offx_3mm[j]
     py = offy_3mm[j]
     c_3mm.addCellref(ccell, point(px, py))
 CellList.append(cname)
+
+for i in range(len(RTCname)):
+    cnam = "Assy_" + RTname[i]
+    RTAss = NewCell(cnam)
+    #	clist = (RTCname[0], "6mm_with_pads", "RT_Fill")
+    clist = (RTname[i] + "_Arry", "6mm_with_pads", "RT_Fill")
+    makeAssy(RTAss, clist)
+    CellList.append(cnam)
 
 #	Make Reticule
 #
@@ -1516,7 +1557,7 @@ from pathlib import Path
 
 home_directory = Path.home()
 # print(home_directory)
-gdsversion = "22_r0"
+gdsversion = "22_r3"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 # print(gdsfile)
 l.drawing.saveFile(gdsfile)
