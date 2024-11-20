@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
+import LayoutScript
 from LayoutScript import *
-from pprint import pprint
-
 
 def BoxDraw(c, xgr, ygr, radius, whigh, wlow, layer):
     #
@@ -345,8 +343,8 @@ def Place_Pad(cd, Name, SXY_Active, SPitch, Slength):
     #	Strip_Arrays.append(Strip_name[i] + "_Arr")
     NstX = SXY_Active // SPitch
     NstY = SXY_Active // Slength
-    xoff = -(((NstX) - 1) * SPitch) // 2  # bottom left
-    yoff = -(((NstY) - 1) * Slength) // 2  # bottom left
+    xoff = -((NstX - 1) * SPitch) // 2  # bottom left
+    yoff = -((NstY - 1) * Slength) // 2  # bottom left
     pref = point(xoff, yoff)
     poff = point(xoff + SPitch, yoff + Slength)
     e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
@@ -363,6 +361,7 @@ def adddrBoxOD(c, xb, yb, xl, yl, rad, layer, OD, OD_inset):
     # draw implant chamfered box shape weith inset active layer (OD)
     adddrBox(c, xb, yb, xl, yl, rad, layer)
     adddrBox(c, xb + OD_inset, yb + OD_inset, xl - 2 * OD_inset, yl - 2 * OD_inset, rad, OD)
+    return 1
 
 
 def make_EdgeArray(Cname, BCell, ECell, NX, NY, DX, DY):
@@ -416,8 +415,8 @@ def makeFillCell(FCname, NFill, Pad_Metal, Pad_Width, BSide, Bot_point, NXY, FCp
 
     H0 = point(Bot_point.x() - FCpitch // 2, Bot_point.y() - FCpitch // 2)
     H1 = point(H0.x() + FCpitch // 2, H0.y() + FCpitch)
-    rcell.addCellrefArray(fcell, V0, V1, NXY + 1, 2 * (NXY) + 1)
-    rcell.addCellrefArray(fcell, H0, H1, 2 * NXY + 1, (NXY) + 1)
+    rcell.addCellrefArray(fcell, V0, V1, NXY + 1, 2 * NXY + 1)
+    rcell.addCellrefArray(fcell, H0, H1, 2 * NXY + 1, NXY + 1)
     return rcell
 
 
@@ -543,7 +542,7 @@ def Edge_Polygon(Outer, inner):
             TList.append(TLst)
         jlist = rotate_list(inner, j + 1)
     TList.append(inner[0])
-    return (TList)
+    return TList
 
 
 def make_filled_cell(fill_cell, fcell_name, inner, outer, layer):
@@ -570,12 +569,14 @@ def make_filled_cell(fill_cell, fcell_name, inner, outer, layer):
     return fcell
 
 
+
+# -*- codin
 import LayoutScript
 from LayoutScript import *
+from pprint import pprint
 
-# from TWR_functions.TWR_fns import *
 
-l = project.newLayout();  # open new instance of layout class
+l = project.newLayout()  # open new instance of layout class
 global dr
 dr = l.drawing
 # pointer to the main drawing
@@ -591,7 +592,7 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v11_r2.gds")
 
-CellFill = True
+CellFill = False
 
 OTL = 0  # outline for drawing
 OD = 1  # Defines active window
@@ -841,11 +842,11 @@ FillCell.addBox(-1250, -1250, 2500, 2500, OTL)
 # Fill cells for edge of array
 EFill_Cells = ["RT_Fill", "Str_Fill", "ACPxl_Fill", "DJPxl_Fill"]
 Inner = [[-2402000, 2402000]], \
-    [[-998000, 1004000], [-1004000, 998000]], \
+    [[-996000, 1000000], [-1000000, 996000]], \
     [[-2502000, 2498000], [-2498000, 2502000]], \
     [[-2498000, 2492000], [-2492000, 2498000]]
 Outer = [[-2506000, 2506000]], \
-    [[-1018000, 1012000], [-1012000, 1018000]], \
+    [[-1010000, 1002000], [-1002000, 1010000]], \
     [[-2518000, 2508000], [-2508000, 2518000]], \
     [[-2518000, 2508000], [-2508000, 2518000]]
 for i in range(len(EFill_Cells)):
@@ -1043,10 +1044,10 @@ for i in range(len(Strip_Pitch)):
     BPinset = 249500
     Row2inset = BPinset + 260000
     # Add fill
-    if (CellFill):
+    if CellFill:
         e = M1M2M3Fill(DCStripn, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
 
-    if (SPitch == 100000):
+    if SPitch == 100000:
         cd.addCellref(BP_80, point(0, Slength // 2 - BPinset))
         cd.addCellref(BP_80, point(0, -Slength // 2 + BPinset))
 
@@ -1059,14 +1060,14 @@ for i in range(len(Strip_Pitch)):
         #       e = ST_add_Array(astr, cd, SPitch, Slength, STXY_Active)
         NstX = STXY_Active // SPitch
         NstY = STXY_Active // Slength
-        xoff = -(((NstX) - 1) * SPitch) // 2  # bottom left
-        yoff = -(((NstY) - 1) * Slength) // 2  # bottom left
+        xoff = -((NstX - 1) * SPitch) // 2  # bottom left
+        yoff = -((NstY - 1) * Slength) // 2  # bottom left
         pref = point(xoff, yoff)
         poff = point(xoff + SPitch, yoff + Slength)
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
-        # Add fill
-        fref = l.drawing.findCell("Str_Fill")
-        e = astr.addCellref(fref, point(0, 0))
+        # Add fill - not needed - border metal is close
+        # fref = l.drawing.findCell("Str_Fill")
+        # e = astr.addCellref(fref, point(0, 0))
         # Add border
         bref = l.drawing.findCell(Border3mm[i])
         e = astr.addCellref(bref, point(0, 0))
@@ -1078,7 +1079,7 @@ for i in range(len(Strip_Pitch)):
             astr.addCellref(cacp, point(0, 0))
             astr.addCellref(cacc, point(0, 0))
 
-    if (SPitch == 50000):
+    if SPitch == 50000:
         #   make two copies of strip for staggered pads
         dr.setCell(DCStripn)
         dr.selectAll()
@@ -1100,14 +1101,14 @@ for i in range(len(Strip_Pitch)):
 
         NstX = STXY_Active // (SPitch * 2)
         NstY = STXY_Active // Slength
-        xoff = -(((NstX) - 1) * (SPitch * 2)) // 2  # bottom left
-        yoff = -(((NstY) - 1) * Slength) // 2  # bottom left
+        xoff = -((NstX - 1) * (SPitch * 2)) // 2  # bottom left
+        yoff = -((NstY - 1) * Slength) // 2  # bottom left
         pref = point(xoff, yoff)
         poff = point(xoff + (SPitch * 2), yoff + Slength)
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
         # Add fill
-        fref = l.drawing.findCell("Str_Fill")
-        e = astr.addCellref(fref, point(0, 0))
+        # fref = l.drawing.findCell("Str_Fill")
+        # e = astr.addCellref(fref, point(0, 0))
         # Add border
         bref = l.drawing.findCell(Border3mm[i])
         e = astr.addCellref(bref, point(0, 0))
@@ -1119,13 +1120,13 @@ for i in range(len(Strip_Pitch)):
             astr.addCellref(cacp, point(0, 0))
             astr.addCellref(cacc, point(0, 0))
 
-    if (SPitch == 12500):
+    if SPitch == 12500:
         astr = NewCell(Strip_name[i] + "_Arr")
         Strip_Arrays.append(Strip_name[i] + "_Arr")
         NstX = SXY_Active // SPitch
         NstY = SXY_Active // Slength
-        xoff = -(((NstX) - 1) * SPitch) // 2  # bottom left
-        yoff = -(((NstY) - 1) * Slength) // 2  # bottom left
+        xoff = -((NstX - 1) * SPitch) // 2  # bottom left
+        yoff = -((NstY - 1) * Slength) // 2  # bottom left
         pref = point(xoff, yoff)
         poff = point(xoff + SPitch, yoff + Slength)
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
@@ -1141,8 +1142,8 @@ SPitch = Strip_Pitch[indx_125]
 Slength = Strip_Length[indx_125]
 NstX = SXY_Active // SPitch
 NstY = SXY_Active // Slength
-xoff = -(((NstX) - 1) * SPitch) // 2
-yoff = -(((NstY) - 1) * Slength) // 2
+xoff = -((NstX - 1) * SPitch) // 2
+yoff = -((NstY - 1) * Slength) // 2
 #
 #   Staggered pad section - MAKE IT ALL STAGGERED 9/27/24
 #
@@ -1204,7 +1205,7 @@ for i in range(len(Pitch)):
     erdraw(cpad, xm, ym, DJIWid_2, 0, OF, 0)
     e = cpad.addCellref(PCell_Outline[i], point(0, 0))
     # add fill to cell
-    if (CellFill):
+    if CellFill:
         e = M1M2M3Fill(cpad_name, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
     # cell without central bump
     dpad = NewCell(DJName[i] + "_NoBump")
@@ -1236,11 +1237,11 @@ cpad = NewCell(name)
 dinset = 1500
 rinset = dinset
 djcorner = activeLength + DJPinset
-e = adddrBoxOD(cpad, -(djcorner) // 2, -(djcorner) // 2, \
+e = adddrBoxOD(cpad, -djcorner // 2, -djcorner // 2, \
                djcorner, djcorner, DJRound + dinset, DJP, OD, OD_inset)
 
 djcorner = activeLength + DJNinset
-e = adddrBoxOD(cpad, -(djcorner) // 2, -(djcorner) // 2, \
+e = adddrBoxOD(cpad, -djcorner // 2, -djcorner // 2, \
                djcorner, djcorner, DJRound + dinset + 3500, DJN, OD, OD_inset)
 
 ##############################################
@@ -1313,7 +1314,7 @@ for i in range(len(RTname)):
     xpm = wbox
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
-    print(str(i) + "  - " + str(xpm))
+    # print(str(i) + "  - " + str(xpm))
     erdrawOD(rtpad, xm, ym, RT_JTEInset[i], RT_JTEWidth[i], JTE, RTRound, OD, OD_inset)
     #	erdrawOD(rtpad, xm, ym, JTEInset, JTEWidth, JTE, RTRound, ND, OD_inset)
     # erdraw(rtpad, xm, ym, JTEInset-OD_inset, JTEWidth-OD_inset, OD, RTRound)
@@ -1449,7 +1450,8 @@ for i in range(len(AC_Type)):
     Assy_AC = NewCell(cname)
     ACPName = "AC_Array_" + AC_Type[i]
     #	print(ACPName)
-    clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", "ACPxl_Fill", Border_List[i]]
+    # clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", "ACPxl_Fill", Border_List[i]]
+    clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", Border_List[i]]
     makeAssy(Assy_AC, clist)
     CellList.append(cname)
 #
@@ -1460,7 +1462,8 @@ for i in range(len(DJ_Type)):
     cname = "AssyDJ_" + DJ_Type[i]
     Assy_DJ = NewCell(cname)
     DJPName = "DJA_" + DJ_Type[i]
-    clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", Border_List[i]]
+    # clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", Border_List[i]]
+    clist = [DJPName, cotl, "JTE", "DJ_PN", Border_List[i]]
     makeAssy(Assy_DJ, clist)
     #    e = M1M2M3Fill(cname)
     CellList.append(cname)
@@ -1484,7 +1487,8 @@ for i in range(len(DJ_Type)):
     cname = "AssyDJ_NB_" + DJ_Type[i]
     Assy_DJ_NB = NewCell(cname)
     DJPName = "DJA_" + DJ_Type[i] + "_noBump"
-    clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", No_Pad_border[i]]
+    # clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", No_Pad_border[i]]
+    clist = [DJPName, cotl, "JTE", "DJ_PN", No_Pad_border[i]]
     makeAssy(Assy_DJ_NB, clist)
     CellList.append(cname)
 #
@@ -1518,11 +1522,13 @@ for j in range(4):
     c_3mm.addCellref(ccell, point(px, py))
 CellList.append(cname)
 
+RTF_list = ["RT_Fill", "empty"]
 for i in range(len(RTCname)):
     cnam = "Assy_" + RTname[i]
     RTAss = NewCell(cnam)
     #	clist = (RTCname[0], "6mm_with_pads", "RT_Fill")
-    clist = (RTname[i] + "_Arry", "6mm_with_pads", "RT_Fill")
+#    clist = (RTname[i] + "_Arry", "6mm_with_pads", "RT_Fill")
+    clist = (RTname[i] + "_Arry", "6mm_with_pads", RTF_list[i])
     makeAssy(RTAss, clist)
     CellList.append(cnam)
 
@@ -1551,15 +1557,16 @@ for i in range(len(CellList)):
     p = point(Rx, Ry)
     Ret.addCellref(cnew, p)
 
+
 print(CellList)
 # import os
 from pathlib import Path
 
 home_directory = Path.home()
 # print(home_directory)
-gdsversion = "22_r3"
+gdsversion = "22_r4"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 # print(gdsfile)
 l.drawing.saveFile(gdsfile)
 
-print("Python script completed")
+print("Writing Version " + gdsversion +  " Python script completed")
