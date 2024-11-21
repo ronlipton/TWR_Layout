@@ -1,3 +1,6 @@
+#import LayoutScript
+#from LayoutScript import *
+
 def BoxDraw(c, xgr, ygr, radius, whigh, wlow, layer):
     #
     #       Draw Top, bottom, left, right boxes to enclose a pixel or strip area

@@ -590,9 +590,10 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #
 #   Import SLAC portions
 #
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v11_r2.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v11_r3.gds")
 
 CellFill = False
+InvertOF = True # turn on conversion of OF to NWD
 
 OTL = 0  # outline for drawing
 OD = 1  # Defines active window
@@ -622,6 +623,7 @@ PD = 21  # p contact implant
 ND = 19  # n contact IMPLANT
 PW = 78  # P-well IMPLANT
 OF = 122  # pixel isolation
+NWD = 227  # NOT NWD is PW
 
 # inset of active
 OD_inset = 120
@@ -1203,6 +1205,7 @@ for i in range(len(Pitch)):
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
     erdraw(cpad, xm, ym, DJIWid_2, 0, OF, 0)
+    #
     e = cpad.addCellref(PCell_Outline[i], point(0, 0))
     # add fill to cell
     if CellFill:
@@ -1465,6 +1468,7 @@ for i in range(len(DJ_Type)):
     # clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", Border_List[i]]
     clist = [DJPName, cotl, "JTE", "DJ_PN", Border_List[i]]
     makeAssy(Assy_DJ, clist)
+    #
     #    e = M1M2M3Fill(cname)
     CellList.append(cname)
 
@@ -1532,6 +1536,14 @@ for i in range(len(RTCname)):
     makeAssy(RTAss, clist)
     CellList.append(cnam)
 
+#   invert OF for NWD layer
+if InvertOF:
+    for i in range(len(CellList)):
+        #  Try to use OF to define NWD
+        print( " Form NWD for " + CellList[i])
+        dr.setCell(CellList[i])
+        l.booleanTool.boolOnLayer(122, 0, 227, "A invert")
+
 #	Make Reticule
 #
 Ret_W = 25500000  # reticule width
@@ -1564,7 +1576,7 @@ from pathlib import Path
 
 home_directory = Path.home()
 # print(home_directory)
-gdsversion = "22_r4"
+gdsversion = "22_r5"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 # print(gdsfile)
 l.drawing.saveFile(gdsfile)
