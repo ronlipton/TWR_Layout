@@ -4,6 +4,7 @@ from LayoutScript import *
 def BoxDraw(c, xgr, ygr, radius, whigh, wlow, layer):
     #
     #       Draw Top, bottom, left, right boxes to enclose a pixel or strip area
+    #       usded with edger draw to complete a chamfered box
     #   ie y of top =- ygr(0) + radius + whigh ...
     #   c - target cell
     #   xgr - x values (4) of guide box
@@ -71,9 +72,9 @@ def sign(num):
 
 def erdraw(c, xgr, ygr, wlow, whigh, layer, radius):
     #
-    #  Draw guard rings at radius
+    #  Draw rings at radius
     #
-    #       c - cell name
+    #       c - cell pointer
     #       xgr - array o x coord of GR arc centers
     #       ygr - array o y coord of GR arc centers
     #		radius - radius of reference arc
@@ -125,42 +126,42 @@ def adddrBox(c, xb, yb, xl, yl, rad, layer):
     return 1
 
 
-def grarray(c, nr, xg, yg, lyr, low, high, rad):
-    #
-    #   Draw guard ring array of nr guard rings
-    #
-    for ind in range(nr):
-        grdraw(c, xg, yg, low[ind], high[ind], lyr, rad[ind])
-
-
-def drcorner(xarr, yarr, npts, layer):
-    #
-    #   draw 4 corners
-    #   points assumed as upper right
-    #
-    dr.clearPoints()
-    dr.activeLayer = layer
-    for ind in range(npts):
-        dr.point(xarr[ind], yarr[ind])
-    dr.polygon()
-    # Upper left
-    dr.clearPoints()
-    dr.activeLayer = layer
-    for ind in range(npts):
-        dr.point(-xarr[ind], yarr[ind])
-    dr.polygon()
-    # lower left
-    dr.clearPoints()
-    dr.activeLayer = layer
-    for ind in range(npts):
-        dr.point(-xarr[ind], -yarr[ind])
-    dr.polygon()
-    # lower right
-    dr.clearPoints()
-    dr.activeLayer = layer
-    for ind in range(npts):
-        dr.point(xarr[ind], -yarr[ind])
-    dr.polygon()
+# def grarray(c, nr, xg, yg, lyr, low, high, rad):
+#     #
+#     #   Draw guard ring array of nr guard rings
+#     #
+#     for ind in range(nr):
+#         grdraw(c, xg, yg, low[ind], high[ind], lyr, rad[ind])
+#
+#
+# def drcorner(xarr, yarr, npts, layer):
+#     #
+#     #   draw 4 corners
+#     #   points assumed as upper right
+#     #
+#     dr.clearPoints()
+#     dr.activeLayer = layer
+#     for ind in range(npts):
+#         dr.point(xarr[ind], yarr[ind])
+#     dr.polygon()
+#     # Upper left
+#     dr.clearPoints()
+#     dr.activeLayer = layer
+#     for ind in range(npts):
+#         dr.point(-xarr[ind], yarr[ind])
+#     dr.polygon()
+#     # lower left
+#     dr.clearPoints()
+#     dr.activeLayer = layer
+#     for ind in range(npts):
+#         dr.point(-xarr[ind], -yarr[ind])
+#     dr.polygon()
+#     # lower right
+#     dr.clearPoints()
+#     dr.activeLayer = layer
+#     for ind in range(npts):
+#         dr.point(xarr[ind], -yarr[ind])
+#     dr.polygon()
 
 
 def makeAssy(cel, celllist):
@@ -175,44 +176,44 @@ def makeAssy(cel, celllist):
         cel.addCellref(cnew, p)
 
 
-def bpArray(celtgt, bpcell, xur, yur):
-    #
-    #  make an 2x2 array of corner bond pad of bpcell
-    #
-    p = point(xur, yur)
-    e = celtgt.addCellref(bpcell, p)
-    p = point(xur, -yur)
-    e = celtgt.addCellref(bpcell, p)
-    p = point(-xur, -yur)
-    e = celtgt.addCellref(bpcell, p)
-    p = point(-xur, yur)
-    e = celtgt.addCellref(bpcell, p)
-
-
-def padArray(homecell, padcell, npad, xstart, xpitch, ypos, smwidth):
-    #
-    # x array of npad pad cells
-    xpad = xstart
-    for ind in range(npad):
-        p = point(xpad, ypos)
-        e = homecell.addCellref(padcell, p)
-        #    print(p,"-",)
-        #    pa = pointArray()
-        #    pa.attach(xpad-smwidth, 0)
-        #    pa.attach(xpad+smwidth, 0)
-        #    pa.attach(xpad+smwidth, ypos)
-        #    pa.attach(xpad-smwidth, ypos)
-        #    pa.attach(xpad-smwidth, 0)
-        #    e = homecell.addBox(pa, 6)
-        xpad = xpad + xpitch
-
-
-def CSpace(W, S, L):
-    # Calculate spaces for uniform mesh (microns) with line width W and total lenght L
-    nex = (W - S) / (L + S)
-    nfl = int(nex)
-    Spac = (W - nfl * L) / (nfl - 1)
-    return Spac
+# def bpArray(celtgt, bpcell, xur, yur):
+#     #
+#     #  make an 2x2 array of corner bond pad of bpcell
+#     #
+#     p = point(xur, yur)
+#     e = celtgt.addCellref(bpcell, p)
+#     p = point(xur, -yur)
+#     e = celtgt.addCellref(bpcell, p)
+#     p = point(-xur, -yur)
+#     e = celtgt.addCellref(bpcell, p)
+#     p = point(-xur, yur)
+#     e = celtgt.addCellref(bpcell, p)
+#
+#
+# def padArray(homecell, padcell, npad, xstart, xpitch, ypos, smwidth):
+#     #
+#     # x array of npad pad cells
+#     xpad = xstart
+#     for ind in range(npad):
+#         p = point(xpad, ypos)
+#         e = homecell.addCellref(padcell, p)
+#         #    print(p,"-",)
+#         #    pa = pointArray()
+#         #    pa.attach(xpad-smwidth, 0)
+#         #    pa.attach(xpad+smwidth, 0)
+#         #    pa.attach(xpad+smwidth, ypos)
+#         #    pa.attach(xpad-smwidth, ypos)
+#         #    pa.attach(xpad-smwidth, 0)
+#         #    e = homecell.addBox(pa, 6)
+#         xpad = xpad + xpitch
+#
+#
+# def CSpace(W, S, L):
+#     # Calculate spaces for uniform mesh (microns) with line width W and total lenght L
+#     nex = (W - S) / (L + S)
+#     nfl = int(nex)
+#     Spac = (W - nfl * L) / (nfl - 1)
+#     return Spac
 
 
 def NewCell(CName):
@@ -243,7 +244,6 @@ def DrawBump(BP, len, layer):
     BP.addPolygon(pts, layer)
     return
 
-
 #	print(vertices)
 
 #  define spacing list 1d mesh with defined limit and  spacing
@@ -255,65 +255,67 @@ def Space_1d(width, spacing):
     return out_points
 
 
-def Make_M1M2_Mesh(Prefix, Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, CA_Pitch, CA, V1):
-    #
-    #   Make mesh contact with Metal 1 and 2
-    cd = NewCell(Prefix + "_M1M2_Mesh")
-    M1Str = NewCell(Prefix + "_M1_strip")
-    e = M1Str.addBox(-Pad_Widths[0], -Len_XY[1] // 2, 2 * Pad_Widths[0], Len_XY[1], Pad_Layers[0])
-    ypoints = Space_1d(Len_XY[1], CA_Pitch)
-    for k in range(len(ypoints)):
-        e = M1Str.addCellref(CA, point(0, ypoints[k]))
-    M1_strips = Space_1d(Len_XY[0], M12_Pitch[0])
-    for k in range(len(M1_strips)):
-        e = cd.addCellref(M1Str, point(M1_strips[k], 0))
-    #  Metal two connection
-    M2Str = NewCell(Prefix + "_M2_Strip")
-    e = M2Str.addBox(-Len_XY[0] // 2, -Pad_Widths[1], Len_XY[0], 2 * Pad_Widths[1], M2)
-    for k in range(len(M1_strips)):
-        e = M2Str.addCellref(V1, point(M1_strips[k], 0))
-    #
-    #	M2_Strips = Space_1d(Len_XY[1], M12_Pitch[1])
-    #	print(M2_Strips)
-    for k in range(len(ypoints) - 1):
-        e = cd.addCellref(M2Str, point(0, ypoints[k] + CA_Pitch // 2))
-    return cd
-
-
-def Make_M1M2M3_Mesh(Prefix, Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, CA_Pitch, CA, Via_list):
-    #
-    #   Make mesh contact with Metal 1,2 and 3
-    V1 = Via_list[0]
-    V2 = Via_list[1]
-    cd = NewCell(Prefix + "_M1M2M3_Mesh")
-    M1Str = NewCell(Prefix + "_M1_strip")
-    e = M1Str.addBox(-Pad_Widths[0], -Len_XY[1] // 2, 2 * Pad_Widths[0], Len_XY[1], Pad_Layers[0])
-    ypoints = Space_1d(Len_XY[1], CA_Pitch)
-    for k in range(len(ypoints)):
-        e = M1Str.addCellref(CA, point(0, ypoints[k]))
-    M1_strips = Space_1d(Len_XY[0], M12_Pitch[0])
-    for k in range(len(M1_strips)):
-        e = cd.addCellref(M1Str, point(M1_strips[k], 0))
-
-    #  Metal two connection
-    M2Str = NewCell(Prefix + "_M2_Strip")
-    e = M2Str.addBox(-Len_XY[0] // 2, -Pad_Widths[1], Len_XY[0], 2 * Pad_Widths[1], M2)
-    for k in range(len(M1_strips)):
-        e = M2Str.addCellref(V1, point(M1_strips[k], 0))
-    for k in range(len(ypoints) - 1):
-        e = cd.addCellref(M2Str, point(0, ypoints[k] + CA_Pitch // 2))
-
-        # Metal 3 connection
-    M3Str = NewCell(Prefix + "_M3_Strip")
-    e = M3Str.addBox(-Len_XY[0] // 2, -Pad_Widths[2], Len_XY[0], 2 * Pad_Widths[2], M3)
-    for k in range(len(M1_strips)):
-        e = M3Str.addCellref(V2, point(M1_strips[k], 0))
-    for k in range(len(ypoints) - 1):
-        e = cd.addCellref(M3Str, point(0, ypoints[k] + CA_Pitch // 2))
-    return cd
+# def Make_M1M2_Mesh(Prefix, Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, CA_Pitch, CA, V1):
+#     #
+#     #   Make mesh contact with Metal 1 and 2
+#     cd = NewCell(Prefix + "_M1M2_Mesh")
+#     M1Str = NewCell(Prefix + "_M1_strip")
+#     e = M1Str.addBox(-Pad_Widths[0], -Len_XY[1] // 2, 2 * Pad_Widths[0], Len_XY[1], Pad_Layers[0])
+#     ypoints = Space_1d(Len_XY[1], CA_Pitch)
+#     for k in range(len(ypoints)):
+#         e = M1Str.addCellref(CA, point(0, ypoints[k]))
+#     M1_strips = Space_1d(Len_XY[0], M12_Pitch[0])
+#     for k in range(len(M1_strips)):
+#         e = cd.addCellref(M1Str, point(M1_strips[k], 0))
+#     #  Metal two connection
+#     M2Str = NewCell(Prefix + "_M2_Strip")
+#     e = M2Str.addBox(-Len_XY[0] // 2, -Pad_Widths[1], Len_XY[0], 2 * Pad_Widths[1], M2)
+#     for k in range(len(M1_strips)):
+#         e = M2Str.addCellref(V1, point(M1_strips[k], 0))
+#     #
+#     #	M2_Strips = Space_1d(Len_XY[1], M12_Pitch[1])
+#     #	print(M2_Strips)
+#     for k in range(len(ypoints) - 1):
+#         e = cd.addCellref(M2Str, point(0, ypoints[k] + CA_Pitch // 2))
+#     return cd
+#
+#
+# def Make_M1M2M3_Mesh(Prefix, Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, CA_Pitch, CA, Via_list):
+#     #
+#     #   Make mesh contact with Metal 1,2 and 3
+#     V1 = Via_list[0]
+#     V2 = Via_list[1]
+#     cd = NewCell(Prefix + "_M1M2M3_Mesh")
+#     M1Str = NewCell(Prefix + "_M1_strip")
+#     e = M1Str.addBox(-Pad_Widths[0], -Len_XY[1] // 2, 2 * Pad_Widths[0], Len_XY[1], Pad_Layers[0])
+#     ypoints = Space_1d(Len_XY[1], CA_Pitch)
+#     for k in range(len(ypoints)):
+#         e = M1Str.addCellref(CA, point(0, ypoints[k]))
+#     M1_strips = Space_1d(Len_XY[0], M12_Pitch[0])
+#     for k in range(len(M1_strips)):
+#         e = cd.addCellref(M1Str, point(M1_strips[k], 0))
+#
+#     #  Metal two connection
+#     M2Str = NewCell(Prefix + "_M2_Strip")
+#     e = M2Str.addBox(-Len_XY[0] // 2, -Pad_Widths[1], Len_XY[0], 2 * Pad_Widths[1], M2)
+#     for k in range(len(M1_strips)):
+#         e = M2Str.addCellref(V1, point(M1_strips[k], 0))
+#     for k in range(len(ypoints) - 1):
+#         e = cd.addCellref(M2Str, point(0, ypoints[k] + CA_Pitch // 2))
+#
+#         # Metal 3 connection
+#     M3Str = NewCell(Prefix + "_M3_Strip")
+#     e = M3Str.addBox(-Len_XY[0] // 2, -Pad_Widths[2], Len_XY[0], 2 * Pad_Widths[2], M3)
+#     for k in range(len(M1_strips)):
+#         e = M3Str.addCellref(V2, point(M1_strips[k], 0))
+#     for k in range(len(ypoints) - 1):
+#         e = cd.addCellref(M3Str, point(0, ypoints[k] + CA_Pitch // 2))
+#     return cd
 
 
 def make_2dmesh(cellname, Metal_list, mlayer, via_list):
+#   make a metal mesh with layer numbers defined on mlayer, vias on via_list and spacings and numbers in Metal_list
+#   Meash is assumed to be a square
     ep = NewCell(cellname + "_mesh")
     for i in range(len(mlayer)):
         line_width = Metal_list[i][1]
@@ -327,34 +329,36 @@ def make_2dmesh(cellname, Metal_list, mlayer, via_list):
         ref_via = point(-xoff + line_width // 2 + pitch, yoff + pitch)
         for j in range(len(via_list)):
             e = ep.addCellrefArray(via_list[j], origin_via, ref_via, nline, nline)
+        #   Horizontal lines
         for j in range(nline):
             ep.addBox(-xoff, yoff - line_width // 2, width, line_width, mlayer[i])
             yoff = yoff + pitch
         xoff = -((nline - 1) // 2) * pitch
         yoff = width // 2
+    #   Vertical lines
         for j in range(nline):
             ep.addBox(-xoff - line_width // 2, -yoff, line_width, width, mlayer[i])
             xoff = xoff + pitch
     return ep
 
 
-def Place_Pad(cd, Name, SXY_Active, SPitch, Slength):
-    astr = NewCell(Name + "_Arr")
-    #	Strip_Arrays.append(Strip_name[i] + "_Arr")
-    NstX = SXY_Active // SPitch
-    NstY = SXY_Active // Slength
-    xoff = -((NstX - 1) * SPitch) // 2  # bottom left
-    yoff = -((NstY - 1) * Slength) // 2  # bottom left
-    pref = point(xoff, yoff)
-    poff = point(xoff + SPitch, yoff + Slength)
-    e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
-    return astr
+# def Place_Pad(cd, Name, SXY_Active, SPitch, Slength):
+#     astr = NewCell(Name + "_Arr")
+#     #	Strip_Arrays.append(Strip_name[i] + "_Arr")
+#     NstX = SXY_Active // SPitch
+#     NstY = SXY_Active // Slength
+#     xoff = -((NstX - 1) * SPitch) // 2  # bottom left
+#     yoff = -((NstY - 1) * Slength) // 2  # bottom left
+#     pref = point(xoff, yoff)
+#     poff = point(xoff + SPitch, yoff + Slength)
+#     e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
+#     return astr
 
 
 def erdrawOD(c, xgr, ygr, wlow, whigh, layer, radius, OD, OD_inset):
-    # draw implant ring shape weith inset active layer (OD)
-    erdraw(c, xgr, ygr, wlow, whigh, layer, radius)
-    erdraw(c, xgr, ygr, wlow - OD_inset, whigh - OD_inset, OD, radius)
+    # draw implant ring shape with inset active layer (OD)
+    erdraw(c, xgr, ygr, wlow, whigh, layer, radius)  # draw the ring
+    erdraw(c, xgr, ygr, wlow - OD_inset, whigh - OD_inset, OD, radius)  # draw the inset
 
 
 def adddrBoxOD(c, xb, yb, xl, yl, rad, layer, OD, OD_inset):
@@ -364,27 +368,27 @@ def adddrBoxOD(c, xb, yb, xl, yl, rad, layer, OD, OD_inset):
     return 1
 
 
-def make_EdgeArray(Cname, BCell, ECell, NX, NY, DX, DY):
-    #  make an NX by NY array of BCells with the ECell at the 4 edges.
-    # at some point need to add mirroring
-    # NX, NY
-    dcell = NewCell(Cname)
-    xecell = (DX * NX / 2) - DX / 2
-    yecell = (DY * NY / 2) - DY / 2
-    dcell.addCellref(ECell, point(xecell, yecell))
-    dcell.addCellref(ECell, point(-xecell, yecell))
-    dcell.addCellref(ECell, point(-xecell, -yecell))
-    dcell.addCellref(ECell, point(xecell, -yecell))
-    p1 = point(-xecell + DX, -yecell)
-    p2 = point(-xecell + 2 * DX, -yecell + DY)
-    dcell.addCellrefArray(BCell, p1, p2, NX - 2, NY)
-    p1 = point(-xecell, -yecell + DY)
-    p2 = point(-xecell, -yecell + 2 * DY)
-    dcell.addCellrefArray(BCell, p1, p2, 1, NY - 2)
-    p1 = point(xecell, -yecell + DY)
-    p2 = point(xecell, -yecell + 2 * DY)
-    dcell.addCellrefArray(BCell, p1, p2, 1, NY - 2)
-    return dcell
+# def make_EdgeArray(Cname, BCell, ECell, NX, NY, DX, DY):
+#     #  make an NX by NY array of BCells with the ECell at the 4 edges.
+#     # at some point need to add mirroring
+#     # NX, NY
+#     dcell = NewCell(Cname)
+#     xecell = (DX * NX / 2) - DX / 2
+#     yecell = (DY * NY / 2) - DY / 2
+#     dcell.addCellref(ECell, point(xecell, yecell))
+#     dcell.addCellref(ECell, point(-xecell, yecell))
+#     dcell.addCellref(ECell, point(-xecell, -yecell))
+#     dcell.addCellref(ECell, point(xecell, -yecell))
+#     p1 = point(-xecell + DX, -yecell)
+#     p2 = point(-xecell + 2 * DX, -yecell + DY)
+#     dcell.addCellrefArray(BCell, p1, p2, NX - 2, NY)
+#     p1 = point(-xecell, -yecell + DY)
+#     p2 = point(-xecell, -yecell + 2 * DY)
+#     dcell.addCellrefArray(BCell, p1, p2, 1, NY - 2)
+#     p1 = point(xecell, -yecell + DY)
+#     p2 = point(xecell, -yecell + 2 * DY)
+#     dcell.addCellrefArray(BCell, p1, p2, 1, NY - 2)
+#     return dcell
 
 
 def roundGrid(x, grid):
@@ -593,7 +597,7 @@ SetUp = setup()  # work around as static string variables are not handled correc
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v11_r3.gds")
 
 CellFill = False
-InvertOF = True # turn on conversion of OF to NWD
+InvertOF = True # turn on inversion of OF to NWD
 
 OTL = 0  # outline for drawing
 OD = 1  # Defines active window
@@ -622,7 +626,7 @@ PD = 21  # p contact implant
 # PST = 117  # p stop (NC)
 ND = 19  # n contact IMPLANT
 PW = 78  # P-well IMPLANT
-OF = 122  # pixel isolation
+OF = 228  # pixel isolation
 NWD = 227  # NOT NWD is PW
 
 # inset of active
@@ -1482,7 +1486,7 @@ for i in range(1):
         #        border = "empty"
         djimp = "empty"
     STX_Ass = NewCell(cname)
-    clist = (Strip_Arrays[i], border)
+    clist = (Strip_Arrays[i], cotl, border)
     makeAssy(STX_Ass, clist)
     CellList.append(cname)
 
@@ -1511,6 +1515,7 @@ for i in range(2):
         px = offx_3mm[j]
         py = offy_3mm[j]
         c_3mm.addCellref(ccell, point(px, py))
+    c_3mm.addCellref(Outline, point(0,0))
     CellList.append(cname)
     CellList.append(cname)
 #
@@ -1524,6 +1529,7 @@ for j in range(4):
     px = offx_3mm[j]
     py = offy_3mm[j]
     c_3mm.addCellref(ccell, point(px, py))
+c_3mm.addCellref(Outline, point(0,0))
 CellList.append(cname)
 
 RTF_list = ["RT_Fill", "empty"]
@@ -1532,7 +1538,7 @@ for i in range(len(RTCname)):
     RTAss = NewCell(cnam)
     #	clist = (RTCname[0], "6mm_with_pads", "RT_Fill")
 #    clist = (RTname[i] + "_Arry", "6mm_with_pads", "RT_Fill")
-    clist = (RTname[i] + "_Arry", "6mm_with_pads", RTF_list[i])
+    clist = (RTname[i] + "_Arry", cotl, "6mm_with_pads", RTF_list[i])
     makeAssy(RTAss, clist)
     CellList.append(cnam)
 
