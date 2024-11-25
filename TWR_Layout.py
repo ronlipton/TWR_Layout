@@ -597,7 +597,7 @@ SetUp = setup()  # work around as static string variables are not handled correc
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v11_r3.gds")
 
 CellFill = False
-InvertOF = True # turn on inversion of OF to NWD
+InvertOF = False # turn on inversion of OF to NWD
 
 OTL = 0  # outline for drawing
 OD = 1  # Defines active window
@@ -636,9 +636,9 @@ nrings = 5
 # Device pixel pitches
 Pitch = [50000, 100000]
 # Pixel Rows
-NPXRow = [100, 50]
+NPXRow = [100, 50, 50]
 # Pixel Columns
-NPXCol = [100, 50]
+NPXCol = [100, 50, 50]
 # Cell size
 XYCell = 6000000
 XYCell_2 = XYCell // 2
@@ -1360,18 +1360,21 @@ for i in range(len(RTname)):
 ##############################################
 # AC Pads
 # list of electrode metal [50um][100um] [electrode width, M1 width, M2-3 width, rows]
-# note that we could use makeMeshContact for thgis now 11/10/24
-Metal_list = [[[31000, 1000, 2000, 11], [31000, 1000, 2000, 11], [31000, 1000, 2000, 11]],
-              [[61000, 1000, 2000, 21], [61000, 1000, 2000, 21], [61000, 1000, 2000, 21]]]
+# note that we could use makeMeshContact for this now 11/10/24
+ACPitch = Pitch
+Metal_list = [[[33000, 1000, 1000, 17], [33000, 1000, 1000, 17], [33000, 1000, 1000, 17]],
+              [[61000, 1000, 1000, 31], [61000, 1000, 1000, 31], [61000, 1000, 1000, 31]],
+              [[33000, 1000, 1000, 17], [33000, 1000, 1000, 17], [33000, 1000, 1000, 17]]]
 # Metal layers (M1, M2, M3)
 mlayer = [43, 47, 49]
-
-name = ["ACPad_50", "ACPad_100"]
-aname = ["AC_Array_50", "AC_Array_100"]
+ACPitch.append(100000)
+name = ["ACPad_50", "ACPad_100", "ACPad_100D33"]
+aname = ["AC_Array_50", "AC_Array_100", "AC_Array_100D33"]
 # Vias [ no CA, V1, V2]
+#   Only vias between M1-M2 and M2-M3
 Via_list = [empty_cell, Via_List[0], Via_List[1]]
 #  fill rows, columns for 50, 100 micron
-NFill = [[25, 6, 6], [50, 12, 12]]
+NFill = [[25, 6, 6], [50, 12, 12], [50, 12, 12]]
 # Nfill = [8, 4, 4]
 for i in range(len(name)):
     BSide = Metal_list[i][0][0]
@@ -1383,22 +1386,22 @@ for i in range(len(name)):
     cd.addCellref(Ref, point(0, 0))
 
     # Outline
-    x = -Pitch[i] // 2
-    y = -Pitch[i] // 2
-    lx = Pitch[i]
-    ly = Pitch[i]
+    x = -ACPitch[i] // 2
+    y = -ACPitch[i] // 2
+    lx = ACPitch[i]
+    ly = ACPitch[i]
     e = cd.addBox(x, y, lx, ly, OTL)
 
     # add fill
     FCname = name[i] + "_Fill"
-    Fill = makeACFill(FCname, NFill[i], Pad_List, Pad_Widths, BSide, Pitch[i])
+    Fill = makeACFill(FCname, NFill[i], Pad_List, Pad_Widths, BSide, ACPitch[i])
     e = cd.addCellref(Fill, point(0, 0))
 
     apad = NewCell(aname[i])
-    xoff = -(((NPXRow[i]) - 1) * Pitch[i]) // 2
-    yoff = -(((NPXCol[i]) - 1) * Pitch[i]) // 2
+    xoff = -(((NPXRow[i]) - 1) * ACPitch[i]) // 2
+    yoff = -(((NPXCol[i]) - 1) * ACPitch[i]) // 2
     pref = point(xoff, yoff)
-    poff = point(xoff + Pitch[i], yoff + Pitch[i])
+    poff = point(xoff + Pitch[i], yoff + ACPitch[i])
     e = apad.addCellrefArray(cd, pref, poff, NPXRow[i], NPXCol[i])
     e = cd.addCellref(M3ZG, point(0, 0))
 
@@ -1450,8 +1453,8 @@ CellList = []
 #	 AC LGAD Cells
 #
 # ACL_list = ["Assy_AC_", "Assy_AC_"]
-Border_List = ["6mm_50um_pitch_bumps", "6mm_100um_pitch_bumps"]
-AC_Type = ["50", "100"]
+Border_List = ["6mm_50um_pitch_bumps", "6mm_100um_pitch_bumps",  "6mm_100um_pitch_bumps"]
+AC_Type = ["50", "100", "100D33"]
 for i in range(len(AC_Type)):
     cname = "Assy_AC_" + AC_Type[i]
     Assy_AC = NewCell(cname)
@@ -1582,7 +1585,7 @@ from pathlib import Path
 
 home_directory = Path.home()
 # print(home_directory)
-gdsversion = "22_r5"
+gdsversion = "22_r6"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 # print(gdsfile)
 l.drawing.saveFile(gdsfile)
