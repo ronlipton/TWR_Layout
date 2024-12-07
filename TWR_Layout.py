@@ -583,6 +583,20 @@ def makeFrame(cell, corner, width, layer):
     cell.addPolygon(pointArray(pa), layer)
     return 0
 
+def makeChamferedFrame(cell, corner, width, inset, layer):
+    fct = [[-1,1],[1,1],[1,-1],[-1,-1],[-1,1]]
+    inmul = [[[0,-1],[-1,0]], [[-1, 0],[0, -1]], [[0, -1],[-1, 0]],
+             [[-1, 0], [0, -1]], [[0,-1],[0,-1]]]
+    inout = [corner, corner-width]
+    pa = pointArray()
+    for i in range(2):
+        for j in range(len(fct)):
+            for facet in range(2):
+                inx = inout[i] + inset*inmul[j][facet][0]
+                iny =  inout[i] + inset*inmul[j][facet][1]
+                pa.attach(inx*fct[j][0] , iny*fct[j][1])
+    cell.addPolygon(pointArray(pa), layer)
+    return 0
 
 # -*- codin
 import LayoutScript
@@ -606,8 +620,8 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v12_r1.gds")
 
-CellFill = True # turn on/off the layout editor fill algorithm
-InvertOF = True # turn on inversion of OF to NWD
+CellFill = False # turn on/off the layout editor fill algorithm
+InvertOF = False # turn on inversion of OF to NWD
 
 OTL = 0  # outline for drawing
 OD = 1  # Defines active window
@@ -636,8 +650,13 @@ PD = 21  # p contact implant
 # PST = 117  # p stop (NC)
 ND = 19  # n contact IMPLANT
 PW = 78  # P-well IMPLANT
-OF = 228  # pixel isolation
+OF = 228  # p well
+PWD = 228 # proper name
 NWD = 227  # NOT NWD is PW
+
+WLayer1 = 201
+WLayer2 = 202
+WLayer3 = 203
 
 # inset of active
 OD_inset = 120
@@ -1054,7 +1073,7 @@ for i in range(len(Strip_Pitch)):
         pslen = Slength // 2
         xps = [psx, -psx, -psx, psx]
         yps = [pslen, pslen, -pslen, -pslen]
-        erdraw(cd, xps, yps, pswidth, 0, OF, rad)
+        erdraw(cd, xps, yps, pswidth, 0, PWD, rad)
     #        cd.addCellref(bpad, point(0, 0))
     #      Add bond pads, make array
     BPinset = 249500
@@ -1218,7 +1237,7 @@ for i in range(len(Pitch)):
     xpm = wbox
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
-    erdraw(cpad, xm, ym, DJIWid_2, 0, OF, 0)
+    erdraw(cpad, xm, ym, DJIWid_2, 0, PWD, 0)
     #
     e = cpad.addCellref(PCell_Outline[i], point(0, 0))
     # add fill to cell
@@ -1270,7 +1289,7 @@ e = adddrBoxOD(cpad, -djcorner // 2, -djcorner // 2, \
 # Reach through pixel and array
 #
 # RT inter pixel gap
-RTGap = [100000, 16000]
+RTGap = [80000, 16000]
 RTRound = [5000, 4000]  # corner rounding radius
 # RTOXRad = 6000
 # RTMRad = RTLenx // 4
@@ -1294,13 +1313,14 @@ RTCname = ["RTArray", "RTP100_Array"]
 # RT_M2_Pitch = 2 * M2_Width
 
 Via_list = [Via_List[0], Via_List[1], CA4x4]
-Metal_list = [[[475000, 1000, 2000, 159], [475000, 1000, 2000, 159], [475000, 1000, 2000, 159]], \
+Metal_list = [[[499000, 1000, 2000, 167], [499000, 1000, 2000, 167], [499000, 1000, 2000, 167]], \
               [[61000, 1000, 2000, 21], [61000, 1000, 2000, 21], [61000, 1000, 2000, 21]]]
 
 # RT JTE parameters
 RT_JTERound = [7000, 7000]
 RT_JTEInset = [2000, 4000]
-RT_JTEWidth = [28000, 6000]
+#RT_JTEWidth = [28000, 6000]
+RT_JTEWidth = [38000, 6000]
 
 for i in range(len(RTname)):
     # RT Active length
@@ -1315,29 +1335,19 @@ for i in range(len(RTname)):
     e = adddrBox(rtpad, -lng // 2, -lng // 2, lng, lng, RTRound[i], ND)
     e = adddrBoxOD(rtpad, -lng // 2 + RTGin, -lng // 2 + RTGin, lng - 2 * RTGin, lng + -2 * RTGin, RTRound[i]-2000, PGN, OD,
                    OD_inset)
-
-    # add fill
-    #	if RTname[i] == "RTPixel":
-    dr.setCell(RTname[i])
-    dr.activeLayer = PGN  # was ND
-    dr.selectActiveLayer()
-    l.booleanTool.setA()
-    dr.activeLayer = OTL
-    dr.selectActiveLayer()
-    l.booleanTool.setB()
-    l.booleanTool.bMinusADelB()
-    dr.fillSelectedShapes("Fill_25pct", 0)
     # add JTE
     wbox = lng // 2 - RTGin
     xpm = wbox
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
     # print(str(i) + "  - " + str(xpm))
-    erdrawOD(rtpad, xm, ym, RT_JTEInset[i], RT_JTEWidth[i], JTE, RT_JTERound[i], OD, OD_inset)
-    #	erdrawOD(rtpad, xm, ym, JTEInset, JTEWidth, JTE, RTRound, ND, OD_inset)
-    # erdraw(rtpad, xm, ym, JTEInset-OD_inset, JTEWidth-OD_inset, OD, RTRound)
-
+#    erdrawOD(rtpad, xm, ym, RT_JTEInset[i], RT_JTEWidth[i], JTE, RT_JTERound[i], OD, OD_inset)
+    JTEEdge  = xpm+RT_JTERound[i]+RT_JTEWidth[i]
+    JTEWid = RT_JTEWidth[i]+RT_JTEInset[i]
+    e = makeChamferedFrame(rtpad, JTEEdge, JTEWid, 3000, JTE)
+    e = makeChamferedFrame(rtpad, JTEEdge-OD_inset, JTEWid-2*OD_inset, 3000, OD)
     RT_Pad_len = lng - 20000
+
     #
     #   Add contact mesh
     #
@@ -1355,7 +1365,28 @@ for i in range(len(RTname)):
         rtpad.addCellref(M3ZG, point(0, 0))
     # Pixel isolation
 
-    e = makeFrame(rtpad, RTPx_2, 500, OF)
+    e = makeFrame(rtpad, RTPx_2, 500, PWD)
+
+    #   add field plates
+    FP_round = RT_JTERound[i] + RT_JTEWidth[i]
+    FP_metalw = [500, 1000, 1000]  # metal half width
+    for k in range(len(Pad_Layers)):
+#        erdraw(rtpad, xm, ym, FP_metalw[k], FP_metalw[k], Pad_Layers[k], FP_round)
+        e = makeChamferedFrame(rtpad, JTEEdge+FP_metalw[k]//2, FP_metalw[k], 3000, Pad_Layers[k])
+        # Contact electrode
+        left_right = JTEEdge
+        rtpad.addBox(-left_right, -FP_metalw[k], 2 * left_right, 2 * FP_metalw[k], Pad_Layers[k])
+    # add fill
+    #
+    dr.setCell(RTname[i])
+    # dr.activeLayer = PGN  # was ND
+    rtpad.selectLayer(JTE)
+    l.booleanTool.setA()
+    rtpad.selectLayer(M2)
+    l.booleanTool.setB()
+    l.booleanTool.aMinusB()
+    l.drawing.currentCell.moveToLayerSelect(WLayer1)
+    dr.fillSelectedShapes("Fill_25pct", 0)
     #
     # Array cell
     #
@@ -1560,8 +1591,8 @@ if InvertOF:
         #  Try to use OF to define NWD
         print( " Form NWD for " + CellList[i])
         dr.setCell(CellList[i])
-        l.booleanTool.boolOnLayer(OF, 0, NWD, "A invert")
-    dr.deleteLayer(OF)
+        l.booleanTool.boolOnLayer(PWD, 0, NWD, "A invert")
+    dr.deleteLayer(PWD)
 #   remove OF
 #	Make Reticule
 #
@@ -1594,8 +1625,8 @@ print(CellList)
 from pathlib import Path
 
 home_directory = Path.home()
-# print(home_directory)
-gdsversion = "22_r8"
+print(home_directory)
+gdsversion = "23_r1"
 gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 # print(gdsfile)
 l.drawing.saveFile(gdsfile)
