@@ -163,6 +163,16 @@ def adddrBox(c, xb, yb, xl, yl, rad, layer):
 #         dr.point(xarr[ind], -yarr[ind])
 #     dr.polygon()
 
+def findCell_CK(Cell_name):
+#
+#   find cell Cell_name - stop program if not found
+#
+    cnew = l.drawing.findCell(Cell_name)
+    if cnew is None:
+        print("Cell " + clist[ind] + " Not Found")
+        exit(1)
+    return cnew
+
 
 def makeAssy(cel, celllist):
     #
@@ -170,7 +180,7 @@ def makeAssy(cel, celllist):
     #  names contained in celllist
     #
     for ind in range(len(celllist)):
-        cnew = l.drawing.findCell(clist[ind])
+        cnew = findCell_CK(clist[ind])
         p = point(0, 0)
         #    print(cnew, " - ", clist[ind])
         cel.addCellref(cnew, p)
@@ -392,7 +402,11 @@ def adddrBoxOD(c, xb, yb, xl, yl, rad, layer, OD, OD_inset):
 
 
 def roundGrid(x, grid):
-    return int(math.ceil((x - (grid // 2)) / float(grid))) * grid
+    ax = (int(math.ceil((abs(x) - (grid // 2)) / float(grid))) * grid)
+    # print(abs(x))
+    # print(ax)
+    ax = ax*abs(x)/x
+    return ax
 
 
 # import numpy as np
@@ -598,6 +612,40 @@ def makeChamferedFrame(cell, corner, width, inset, layer):
     cell.addPolygon(pointArray(pa), layer)
     return 0
 
+def cArray(pitch, length, active):
+#
+#	calculate array size and reference points given
+#	pitch, length and enclosure size
+#
+    NstX = active // pitch
+    NstY = active // length
+    xoff = -((NstX - 1) * pitch) // 2  # bottom left
+    yoff = -((NstY - 1) * length) // 2  # bottom left
+    pref = point(xoff, yoff)
+    poff = point(xoff + pitch, yoff + length)
+    return NstX, NstY, pref, poff
+
+import time
+def addZAFill(Assy, zalyr, templyr, fillCell):
+#   add ZA Fill
+
+    start_time = time.time()
+    dr.setCell(Assy)
+    l.booleanTool.boolOnLayer(ZA, 0, templyr, "A invert", 0, 0, 2)
+    Assy.selectLayer(templyr)
+    dr.fillSelectedShapes(fillCell, 0)
+    Assy.deleteLayer(templyr)
+#   delete edge
+    mult = [[-1,1], [1,1], [1, -1], [-1,-1]]
+    for imul in range(len(mult)):
+        dr.point(mult[imul][0]*2894598, mult[imul][1]*2895459)
+        dr.point(mult[imul][0]*2955159, mult[imul][1]*2956250)
+        dr.cSelect()
+        dr.deleteSelect()
+    print("ZA FIll time elapsed: {:.2f}s".format(time.time() - start_time))
+    return True
+
+
 # -*- codin
 import LayoutScript
 from LayoutScript import *
@@ -618,12 +666,14 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #
 #   Import SLAC portions
 #
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v12_r1.gds")
+#dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v12_r1.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v13.gds")
 
 CellFill = False # turn on/off the layout editor fill algorithm
-InvertOF = False # turn on inversion of OF to NWD
+InvertOF = True # turn on inversion of OF to NWD
+ZA_Fill = True
 
-OTL = 0  # outline for drawing
+OTL = 201  # outline for drawing
 OD = 1  # Defines active window
 JTE = 116  # Junction termination extension IMPLANT (NP-JTE)
 PGN = 117  # boron gain layer IMPLANT (NC)
@@ -757,6 +807,12 @@ FCell_25.addBox(-500, -500, 1000, 1000, M2)
 FCell_25.addBox(-500, -500, 1000, 1000, M3)
 FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
 
+# Cell for ZA fill
+ZA_FillCell = NewCell("Za_Fill")
+ZA_FillCell.addBox(-2000, -2000, 4000, 4000, ZA)
+ZA_FillCell.addBox(-4000, -4000, 8000, 8000, OTL)
+
+
 Pad_Widths = [M1_Width_2, M2_Width_2, M3_Width_2]
 # Max area square pads
 Pad_Cells = ["M1_Pad", "M2_Pad", "M3_Pad"]
@@ -770,7 +826,7 @@ for i in range(len(Pad_Cells)):
     m1p.addBox(-Pad_Widths[i], -Pad_Widths[i], 2 * Pad_Widths[i], 2 * Pad_Widths[i], Pad_Layers[i])
     Pad_List.append(m1p)
 
-M1Pad = l.drawing.findCell(Pad_Cells[0])
+M1Pad = findCell_CK(Pad_Cells[0])
 #  CA contact Cells
 #
 ml = NewCell("Contact")
@@ -871,9 +927,6 @@ FillCell.addBox(-500, -500, 1000, 1000, M3)
 FillCell.addBox(-1250, -1250, 2500, 2500, OTL)
 
 #   RT Fill
-# Outer = [[-2516000, 2512000],[-2512000, 2516000]]
-# Inner = [[-2346000, 2336000],[-2336000, 2346000]]
-# OFrame = Edge_Polygon(Outer, Inner)
 # Fill cells for edge of array
 EFill_Cells = ["RT_Fill", "Str_Fill", "ACPxl_Fill", "DJPxl_Fill"]
 Inner = [[-2402000, 2402000]], \
@@ -887,22 +940,14 @@ Outer = [[-2506000, 2506000]], \
 for i in range(len(EFill_Cells)):
     fcell_RT = make_filled_cell("Fill_Cell", EFill_Cells[i], Inner[i], Outer[i], OTL)
 
-# Letters = []
-# CNames = "abcdefghijklmn"
-# for j in range(13):
-#     num = l.drawing.addCell()
-#     cname = "c_" + CNames[j]
-#     num.thisCell.cellName = cname
-#     ##	e = l.drawing.setCell(cname)
-#     cCell = num.thisCell
-#     e = cCell.addText(MET, point(0, 0), CNames[j])
-#     e.setWidth(200000)
-#     l.drawing.textSelect()
-#     l.drawing.toPolygon()
-#     Letters.append(cCell)
+#   exclude edge cell
+corner = 3000000
+width = 117000
+exedge_PWD = NewCell("Exclude_edge_PWD")
+result = makeFrame(exedge_PWD, corner, width, PWD)
 
 ntype = 3
-CA_Contact = l.drawing.findCell("Contact_4x4")
+CA_Contact = findCell_CK("Contact_4x4")
 
 ##############################################
 #  make DC strxcel
@@ -924,7 +969,7 @@ Strip_Length = [50000, Str_Length, Str_Length, Str_Length, Str_Length,
 
 Strip_name = ["Str125", "Str50_DJ", "Str50_DJNPS", "Str50_AC", "Str50_NOGN",
               "Str100_DJ", "Str100_DJNPS", "Str100_AC", "Str100_NOGN",
-              "St100_AC20", "St100AC_40", "St100AC_60", "St100AC_80"]
+              "St100AC_20", "St100AC_40", "St100AC_60", "St100AC_80"]
 
 Strip_PS = [True, True, False, False, True, True, False, False, True,
             False, False, False, False]
@@ -938,8 +983,8 @@ ConCell = [CA_Contact, CA_Contact, CA_Contact, empty_cell, CA_Contact,
 Imp_Lyr = [NPL, NPL, NPL, 0, NPL, NPL, NPL, 0, NPL,
            0, 0, 0, 0]
 
-Border3mm = ["empty", "3mm_with_pads_DJ", "3mm_with_pads_DJ", "3mm_with_pads", "3mm_with_pads",
-             "3mm_with_pads_DJ", "3mm_with_pads_DJ", "3mm_with_pads", "3mm_with_pads",
+Border3mm = ["empty", "3mm_with_pads", "3mm_with_pads", "3mm_with_pads", "3mm_with_pads",
+             "3mm_with_pads", "3mm_with_pads", "3mm_with_pads", "3mm_with_pads",
              "3mm_with_pads", "3mm_with_pads", "3mm_with_pads", "3mm_with_pads"]
 
 AC_Strip_Index = [3, 7, 9, 10, 11, 12]
@@ -1093,18 +1138,20 @@ for i in range(len(Strip_Pitch)):
         cellnames_3mm.append(name)
 
         #       e = ST_add_Array(astr, cd, SPitch, Slength, STXY_Active)
-        NstX = STXY_Active // SPitch
-        NstY = STXY_Active // Slength
-        xoff = -((NstX - 1) * SPitch) // 2  # bottom left
-        yoff = -((NstY - 1) * Slength) // 2  # bottom left
-        pref = point(xoff, yoff)
-        poff = point(xoff + SPitch, yoff + Slength)
+        NstX, NstY, pref, poff = cArray(SPitch, Slength, STXY_Active)
+        # NstX = STXY_Active // SPitch
+        # NstY = STXY_Active // Slength
+        # xoff = -((NstX - 1) * SPitch) // 2  # bottom left
+        # yoff = -((NstY - 1) * Slength) // 2  # bottom left
+        # pref = point(xoff, yoff)
+        # poff = point(xoff + SPitch, yoff + Slength)
+
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
         # Add fill - not needed - border metal is close
         # fref = l.drawing.findCell("Str_Fill")
         # e = astr.addCellref(fref, point(0, 0))
         # Add border
-        bref = l.drawing.findCell(Border3mm[i])
+        bref = findCell_CK(Border3mm[i])
         e = astr.addCellref(bref, point(0, 0))
         # Add DJ implants
         if "DJ" in Strip_name[i]:
@@ -1134,18 +1181,19 @@ for i in range(len(Strip_Pitch)):
         astr = NewCell(name)
         cellnames_3mm.append(name)
 
-        NstX = STXY_Active // (SPitch * 2)
-        NstY = STXY_Active // Slength
-        xoff = -((NstX - 1) * (SPitch * 2)) // 2  # bottom left
-        yoff = -((NstY - 1) * Slength) // 2  # bottom left
-        pref = point(xoff, yoff)
-        poff = point(xoff + (SPitch * 2), yoff + Slength)
+        # NstX = STXY_Active // (SPitch * 2)
+        # NstY = STXY_Active // Slength
+        # xoff = -((NstX - 1) * (SPitch * 2)) // 2  # bottom left
+        # yoff = -((NstY - 1) * Slength) // 2  # bottom left
+        # pref = point(xoff, yoff)
+        # poff = point(xoff + (SPitch * 2), yoff + Slength)
+        NstX, NstY, pref, poff = cArray(SPitch*2, Slength, STXY_Active)
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
         # Add fill
         # fref = l.drawing.findCell("Str_Fill")
         # e = astr.addCellref(fref, point(0, 0))
         # Add border
-        bref = l.drawing.findCell(Border3mm[i])
+        bref = findCell_CK(Border3mm[i])
         e = astr.addCellref(bref, point(0, 0))
         # Add DJ implants
         if "DJ" in Strip_name[i]:
@@ -1158,12 +1206,13 @@ for i in range(len(Strip_Pitch)):
     if SPitch == 12500:
         astr = NewCell(Strip_name[i] + "_Arr")
         Strip_Arrays.append(Strip_name[i] + "_Arr")
-        NstX = SXY_Active // SPitch
-        NstY = SXY_Active // Slength
-        xoff = -((NstX - 1) * SPitch) // 2  # bottom left
-        yoff = -((NstY - 1) * Slength) // 2  # bottom left
-        pref = point(xoff, yoff)
-        poff = point(xoff + SPitch, yoff + Slength)
+        # NstX = SXY_Active // SPitch
+        # NstY = SXY_Active // Slength
+        # xoff = -((NstX - 1) * SPitch) // 2  # bottom left
+        # yoff = -((NstY - 1) * Slength) // 2  # bottom left
+        # pref = point(xoff, yoff)
+        # poff = point(xoff + SPitch, yoff + Slength)
+        NstX, NstY, pref, poff = cArray(SPitch, Slength, SXY_Active)
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
 
 #
@@ -1191,7 +1240,7 @@ pref = point(xoff + SPitch, yoff + ST_CA_Pitch)
 poff = point(xoff + SPitch * 3, yoff + Slength + ST_CA_Pitch)
 e = Bump_125.addCellrefArray(M23V23Z, pref, poff, NstX // 2, NstY)
 
-st125cell = l.drawing.findCell(Strip_name[indx_125] + "_Arr")
+st125cell = findCell_CK(Strip_name[indx_125] + "_Arr")
 e = st125cell.addCellref(Bump_125, point(0, 0))
 
 ##############################################
@@ -1301,8 +1350,8 @@ RTCol = [8, 50]
 # RT LGAD Pitch
 # RTPitch = [600000, 600000]  # need to replace x, y (below) by an index
 
-RTPitchx = [600000, 100000]
-RTPitchy = [600000, 100000]
+RTPitchx = [625000, 100000]
+RTPitchy = [625000, 100000]
 RTname = ["RTPixel", "RT_100"]
 ## RTMSurr = -10000 # overlap with cathode
 RTPad_inset = 25000
@@ -1487,23 +1536,29 @@ PSWid = 50000  # width of contact in cell
 cotl = "Cell_Outline"
 Outline = NewCell(cotl)
 Outline.addBox(-XYCell_2, -XYCell_2, XYCell, XYCell, OTL)
-
+#
+#  Make assemblies
+#
 CellList = []
 #
 #	 AC LGAD Cells
-# add third option forD33 small electrode cell
+# add third option for small electrode cell
 #
 # ACL_list = ["Assy_AC_", "Assy_AC_"]
 Border_List = ["6mm_50um_pitch_bumps", "6mm_100um_pitch_bumps",  "6mm_100um_pitch_bumps"]
-AC_Type = ["50", "100", "100D33"]
+AC_Type = ["50", "100"]
 for i in range(len(AC_Type)):
     cname = "Assy_AC_" + AC_Type[i]
     Assy_AC = NewCell(cname)
     ACPName = "AC_Array_" + AC_Type[i]
     #	print(ACPName)
     # clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", "ACPxl_Fill", Border_List[i]]
-    clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", Border_List[i]]
+    clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", Border_List[i], "Exclude_edge_PWD"]
     makeAssy(Assy_AC, clist)
+#   add ZA Fill
+    if (ZA_Fill):
+        addZAFill(Assy_AC, ZA, WLayer2, ZA_FillCell)
+        print(cname + " ZA Fill")
     CellList.append(cname)
 #
 #	 DJ LGAD Cells
@@ -1514,10 +1569,32 @@ for i in range(len(DJ_Type)):
     Assy_DJ = NewCell(cname)
     DJPName = "DJA_" + DJ_Type[i]
     # clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", Border_List[i]]
-    clist = [DJPName, cotl, "JTE", "DJ_PN", Border_List[i]]
+    clist = [DJPName, cotl, "JTE", "DJ_PN", Border_List[i], "Exclude_edge_PWD"]
     makeAssy(Assy_DJ, clist)
+    #   add ZA Fill
+    if (ZA_Fill):
+        addZAFill(Assy_DJ, ZA, WLayer2, ZA_FillCell)
+        print(cname + " ZA Fill")
+    CellList.append(cname)
     #
-    #    e = M1M2M3Fill(cname)
+    #
+
+#
+#	 no gain Cells
+#
+NG_Type = ["50_NG", "100_NG"]
+for i in range(len(NG_Type)):
+    cname = "AssyPX_" + NG_Type[i]
+    Assy_NGPX = NewCell(cname)
+    NGName = "DJA_" + DJ_Type[i]
+    # clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", Border_List[i]]
+    clist = [NGName, cotl, "JTE", Border_List[i], "Exclude_edge_PWD"] # leave out DJ implants
+    makeAssy(Assy_NGPX, clist)
+    #   add ZA Fill
+    if (ZA_Fill):
+        addZAFill(Assy_NGPX, ZA, WLayer2, ZA_FillCell)
+        print(cname + " ZA Fill")
+    #
     CellList.append(cname)
 
 for i in range(1):
@@ -1530,19 +1607,24 @@ for i in range(1):
         #        border = "empty"
         djimp = "empty"
     STX_Ass = NewCell(cname)
-    clist = (Strip_Arrays[i], cotl, border)
+    clist = (Strip_Arrays[i], cotl, border, "Exclude_edge_PWD")
     makeAssy(STX_Ass, clist)
     CellList.append(cname)
-
-No_Pad_border = ["6mm_50um_pitch_bumps_DJ_ASIL", "6mm_100um_pitch_bumps_DJ_ASIL"]
-for i in range(len(DJ_Type)):
-    cname = "AssyDJ_NB_" + DJ_Type[i]
-    Assy_DJ_NB = NewCell(cname)
-    DJPName = "DJA_" + DJ_Type[i] + "_noBump"
-    # clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", No_Pad_border[i]]
-    clist = [DJPName, cotl, "JTE", "DJ_PN", No_Pad_border[i]]
-    makeAssy(Assy_DJ_NB, clist)
-    CellList.append(cname)
+######## no 50?
+No_Pad_border = ["6mm_100um_pitch_bumps_DJ_ASIL", "6mm_100um_pitch_bumps_DJ_ASIL"]
+# Just one of these for the moment
+#for i in range(len(DJ_Type)):
+cname = "AssyDJ_NB_" + DJ_Type[1]
+Assy_DJ_NB = NewCell(cname)
+DJPName = "DJA_" + DJ_Type[1] + "_noBump"
+# clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", No_Pad_border[i]]
+clist = [DJPName, cotl, "JTE", "DJ_PN", No_Pad_border[1], "Exclude_edge_PWD"]
+#
+makeAssy(Assy_DJ_NB, clist)
+if (ZA_Fill):
+    addZAFill(Assy_DJ_NB, ZA, WLayer2, ZA_FillCell)
+    print(cname + " ZA Fill")
+CellList.append(cname)
 #
 #    Assemble 3mm strip cells
 cells_3mm = ["Assy_str_3mm_50", "Assy_str_3mm_100", "Assy_ACStr_Elec"]
@@ -1554,12 +1636,19 @@ for i in range(2):
     cname = cells_3mm[i]
     c_3mm = cell3mm_list[i]
     for j in range(4):
-        ccell = l.drawing.findCell(cellnames_3mm[4 * i + j])
+        ccell = findCell_CK(cellnames_3mm[4 * i + j])
         # print(cellnames_3mm[4 * i + j], i, j)
         px = offx_3mm[j]
         py = offy_3mm[j]
         c_3mm.addCellref(ccell, point(px, py))
     c_3mm.addCellref(Outline, point(0,0))
+    # exclude edge from NWD
+    c_3mm.addCellref(exedge_PWD, point(0, 0))
+
+    #   add ZA Fill
+    if (ZA_Fill):
+        addZAFill(c_3mm, ZA, WLayer2, ZA_FillCell)
+        print(cname + " ZA Fill")
     CellList.append(cname)
     CellList.append(cname)
 #
@@ -1568,24 +1657,32 @@ indx = 2
 cname = cells_3mm[2]
 c_3mm = cell3mm_list[2]
 for j in range(4):
-    ccell = l.drawing.findCell(cellnames_3mm[4 * indx + j])
+    ccell = findCell_CK(cellnames_3mm[4 * indx + j])
     #    print(cellnames_3mm[4 * indx + j], i, j)
     px = offx_3mm[j]
     py = offy_3mm[j]
     c_3mm.addCellref(ccell, point(px, py))
 c_3mm.addCellref(Outline, point(0,0))
+# exclude edge from NWD
+c_3mm.addCellref(exedge_PWD, point(0, 0))
+if (ZA_Fill):
+    addZAFill(c_3mm, ZA, WLayer2, ZA_FillCell)
+    print(cname + " ZA Fill")
 CellList.append(cname)
 
-RTF_list = ["RT_Fill", "empty"]
+RTF_list = ["empty", "empty"]
 for i in range(len(RTCname)):
     cnam = "Assy_" + RTname[i]
     RTAss = NewCell(cnam)
 #    clist = (RTname[i] + "_Arry", "6mm_with_pads", "RT_Fill")
-    clist = (RTname[i] + "_Arry", cotl, "6mm_with_pads", RTF_list[i])
+    clist = (RTname[i] + "_Arry", cotl, "6mm_with_pads", RTF_list[i], "Exclude_edge_PWD")
     makeAssy(RTAss, clist)
+    if (ZA_Fill):
+        addZAFill(RTAss, ZA, WLayer2, ZA_FillCell)
+        print(cnam + " ZA Fill")
     CellList.append(cnam)
 
-#   invert OF for NWD layer
+#   invert OF/PWD for NWD layer
 if InvertOF:
     for i in range(len(CellList)):
         #  Try to use OF to define NWD
@@ -1593,7 +1690,8 @@ if InvertOF:
         dr.setCell(CellList[i])
         l.booleanTool.boolOnLayer(PWD, 0, NWD, "A invert")
     dr.deleteLayer(PWD)
-#   remove OF
+#   remove PWD
+
 #	Make Reticule
 #
 Ret_W = 25500000  # reticule width
@@ -1615,7 +1713,7 @@ for i in range(len(CellList)):
     RCol = i % NCellx
     Rx = X0 + RCol * XYCell
     Ry = Y0 + RRow * XYCell
-    cnew = l.drawing.findCell(CellList[i])
+    cnew = findCell_CK(CellList[i])
     p = point(Rx, Ry)
     Ret.addCellref(cnew, p)
 
@@ -1625,10 +1723,11 @@ print(CellList)
 from pathlib import Path
 
 home_directory = Path.home()
-print(home_directory)
-gdsversion = "23_r1"
-gdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
-# print(gdsfile)
+
+gdsversion = "24_r4"
+gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
+print(gdsfile)
+
 l.drawing.saveFile(gdsfile)
 
 print("Writing Version " + gdsversion +  " Python script completed")
