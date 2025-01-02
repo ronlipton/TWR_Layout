@@ -670,8 +670,8 @@ SetUp = setup()  # work around as static string variables are not handled correc
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v13.gds")
 
 CellFill = False # turn on/off the layout editor fill algorithm
-InvertOF = True # turn on inversion of OF to NWD
-ZA_Fill = True
+InvertOF = False # turn on inversion of OF to NWD
+ZA_Fill = False
 
 OTL = 201  # outline for drawing
 OD = 1  # Defines active window
@@ -741,18 +741,6 @@ length = [Lng]
 # RT LGAD rows, columns
 RTRow = 8
 RTCol = 8
-# RT LGAD Pitch
-# RTPitch = [600000, 600000]  # need to replace x, y (below) by an index
-#RTPitchx = 600000
-#RTPitchy = 600000
-# RT inter pixel gap
-#RTGap = 100000
-# RT Active length
-# RTLenx = RTPitchx - RTGap  # active lengths
-# RTLeny = RTPitchy - RTGap
-#RTRound = 5000  # corner rounding radius
-# RTOXRad = 6000
-# RTMRad = RTLenx // 4
 
 # JTE parameters
 JTERound = 25000
@@ -817,6 +805,7 @@ Pad_Widths = [M1_Width_2, M2_Width_2, M3_Width_2]
 # Max area square pads
 Pad_Cells = ["M1_Pad", "M2_Pad", "M3_Pad"]
 Via_Cells = ["V1_Via", "V2_Via", "ZG_Via"]
+
 Pad_Layers = [M1, M2, M3]
 # Pad_Ref = []
 # Make Metal Pad cells
@@ -963,6 +952,7 @@ offset_3mm = 1500000
 #	strip parameters for 6 and 3mm cells
 Strip_Pitch = [12500, 50000, 50000, 50000, 50000, 100000, 100000, 100000, 100000,
                100000, 100000, 100000, 100000]
+
 Strip_Length = [50000, Str_Length, Str_Length, Str_Length, Str_Length,
                 Str_Length, Str_Length, Str_Length, Str_Length,
                 Str_Length, Str_Length, Str_Length, Str_Length]
@@ -977,9 +967,18 @@ Strip_Contacty = ["Strp125CY", "Strp50CY", "Strp50CY", "Strp50CY", "Strp50CY",
                   "Strp100CY", "Strp100CY", "Strp100CY", "Strp100CY",
                   "Strp100CY", "Strp100CY", "Strp100CY", "Strp100CY"]
 
-ConCell = [CA_Contact, CA_Contact, CA_Contact, empty_cell, CA_Contact,
-           CA_Contact, CA_Contact, empty_cell, CA_Contact,
+VM1M2 = findCell_CK("V1_Via_4x4")
+VM2M3 = findCell_CK("V2_Via_4x4")
+ConCell = [CA_Contact, CA_Contact, CA_Contact, CA_Contact, CA_Contact,
+           CA_Contact, CA_Contact, CA_Contact, CA_Contact,
+           CA_Contact, CA_Contact, CA_Contact, CA_Contact]
+V1Cell = [VM1M2, VM1M2, VM1M2, empty_cell, VM1M2,
+           VM1M2, VM1M2, empty_cell, VM1M2,
            empty_cell, empty_cell, empty_cell, empty_cell]
+V2Cell = [VM2M3, VM2M3, VM2M3, VM2M3, VM2M3,
+           VM2M3, VM2M3, VM2M3, VM2M3,
+           VM2M3, VM2M3, VM2M3, VM2M3]
+
 Imp_Lyr = [NPL, NPL, NPL, 0, NPL, NPL, NPL, 0, NPL,
            0, 0, 0, 0]
 
@@ -1003,8 +1002,11 @@ ST_M1_Pitch = 2000  # strip M1 contact strip Pitch
 SXY_Active = 5000000
 STXY_Active = 2000000
 #   X,Y line width and space for metal layers 1, 2, 3
-LList = [[750, 750], [4000, 4000], [4000, 4000]]
-SList = [[1250, 1250], [6000, 6000], [6000, 6000]]
+# LList = [[750, 750], [4000, 4000], [4000, 4000]]
+# SList = [[1250, 1250], [6000, 6000], [6000, 6000]]
+LList = [[750, 750], [750, 750], [4000, 4000]]
+SList = [[1250, 1250], [1250, 1250], [6000, 6000]]
+
 
 STRound = 2000  # edge rounding parameter for strips
 STMSurr = 1000
@@ -1103,7 +1105,7 @@ for i in range(len(Strip_Pitch)):
     lxy = [siwidth, lng]
     # cd.addCellref(ce, point(0, 0))
     MCell_name = Strip_name[i] + "_Electrode"
-    CList = [ConCell[i], Via_List[0], Via_List[1]]
+    CList = [ConCell[i], V1Cell[i], V2Cell[i]]
     ce = makeMeshContact(MCell_name, lxy, LList, SList, Pad_Layers, CList)
     cd.addCellref(ce, point(0, 0))
 
@@ -1139,12 +1141,6 @@ for i in range(len(Strip_Pitch)):
 
         #       e = ST_add_Array(astr, cd, SPitch, Slength, STXY_Active)
         NstX, NstY, pref, poff = cArray(SPitch, Slength, STXY_Active)
-        # NstX = STXY_Active // SPitch
-        # NstY = STXY_Active // Slength
-        # xoff = -((NstX - 1) * SPitch) // 2  # bottom left
-        # yoff = -((NstY - 1) * Slength) // 2  # bottom left
-        # pref = point(xoff, yoff)
-        # poff = point(xoff + SPitch, yoff + Slength)
 
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
         # Add fill - not needed - border metal is close
@@ -1181,17 +1177,9 @@ for i in range(len(Strip_Pitch)):
         astr = NewCell(name)
         cellnames_3mm.append(name)
 
-        # NstX = STXY_Active // (SPitch * 2)
-        # NstY = STXY_Active // Slength
-        # xoff = -((NstX - 1) * (SPitch * 2)) // 2  # bottom left
-        # yoff = -((NstY - 1) * Slength) // 2  # bottom left
-        # pref = point(xoff, yoff)
-        # poff = point(xoff + (SPitch * 2), yoff + Slength)
         NstX, NstY, pref, poff = cArray(SPitch*2, Slength, STXY_Active)
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
         # Add fill
-        # fref = l.drawing.findCell("Str_Fill")
-        # e = astr.addCellref(fref, point(0, 0))
         # Add border
         bref = findCell_CK(Border3mm[i])
         e = astr.addCellref(bref, point(0, 0))
@@ -1461,7 +1449,8 @@ name = ["ACPad_50", "ACPad_100", "ACPad_100D33"]
 aname = ["AC_Array_50", "AC_Array_100", "AC_Array_100D33"]
 # Vias [ no CA, V1, V2]
 #   Only vias between M1-M2 and M2-M3
-Via_list = [empty_cell, Via_List[0], Via_List[1]]
+# 1/2/25 modify to couple M1 to
+Via_list = [CA4x4, empty_cell, Via_List[1]]
 #  fill rows, columns for 50, 100 micron
 NFill = [[25, 6, 6], [50, 12, 12], [50, 12, 12]]
 # Nfill = [8, 4, 4]
@@ -1724,7 +1713,7 @@ from pathlib import Path
 
 home_directory = Path.home()
 
-gdsversion = "24_r4"
+gdsversion = "25_r0"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 print(gdsfile)
 
