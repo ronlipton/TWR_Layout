@@ -169,7 +169,7 @@ def findCell_CK(Cell_name):
 #
     cnew = l.drawing.findCell(Cell_name)
     if cnew is None:
-        print("Cell " + clist[ind] + " Not Found")
+        print("Cell " + Cell_name + " Not Found")
         exit(1)
     return cnew
 
@@ -667,11 +667,15 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #   Import SLAC portions
 #
 #dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v12_r1.gds")
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v13.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v14.gds")
+# Test structures
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v4.GDS")
+# List of test structure cells
+SLAC_TS_List = ["AC_MidGap_Block", "AC_NoGap_Block", "AC_WideGapBlock", "DJ_Block", "RT_T3x3_PSTOP_Block"]
 
-CellFill = False # turn on/off the layout editor fill algorithm
-InvertOF = False # turn on inversion of OF to NWD
-ZA_Fill = False
+CellFill = True # turn on/off the layout editor fill algorithm
+InvertOF = True # turn on inversion of OF to NWD
+ZA_Fill = True
 
 OTL = 201  # outline for drawing
 OD = 1  # Defines active window
@@ -1596,8 +1600,12 @@ for i in range(1):
         #        border = "empty"
         djimp = "empty"
     STX_Ass = NewCell(cname)
+    print(Strip_Arrays[i])
     clist = (Strip_Arrays[i], cotl, border, "Exclude_edge_PWD")
     makeAssy(STX_Ass, clist)
+    if (ZA_Fill):
+        addZAFill(STX_Ass, ZA, WLayer2, ZA_FillCell)
+#        print(cname + " ZA Fill")
     CellList.append(cname)
 ######## no 50?
 No_Pad_border = ["6mm_100um_pitch_bumps_DJ_ASIL", "6mm_100um_pitch_bumps_DJ_ASIL"]
@@ -1670,6 +1678,12 @@ for i in range(len(RTCname)):
         addZAFill(RTAss, ZA, WLayer2, ZA_FillCell)
         print(cnam + " ZA Fill")
     CellList.append(cnam)
+#
+#   Add test structures
+#
+for i in range(len(SLAC_TS_List)):
+    cnam = SLAC_TS_List[i]
+    CellList.append(cnam)
 
 #   invert OF/PWD for NWD layer
 if InvertOF:
@@ -1713,7 +1727,7 @@ from pathlib import Path
 
 home_directory = Path.home()
 
-gdsversion = "25_r0"
+gdsversion = "25_r2"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 print(gdsfile)
 
