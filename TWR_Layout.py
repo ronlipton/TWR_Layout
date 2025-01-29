@@ -631,9 +631,16 @@ def addZAFill(Assy, zalyr, templyr, fillCell):
 
     start_time = time.time()
     dr.setCell(Assy)
-    l.booleanTool.boolOnLayer(ZA, 0, templyr, "A invert", 0, 0, 2)
+    l.booleanTool.boolOnLayer(ZA, 0, templyr, 'A invert', 0, 0, 2)
+
     Assy.selectLayer(templyr)
     dr.fillSelectedShapes(fillCell, 0)
+#
+#   Fix lower left edge issues
+#
+    dr.point(-2654656,-2596276)
+    dr.cSelect()
+    dr.deleteSelect()
     Assy.deleteLayer(templyr)
 #   delete edge
     mult = [[-1,1], [1,1], [1, -1], [-1,-1]]
@@ -667,14 +674,14 @@ SetUp = setup()  # work around as static string variables are not handled correc
 #   Import SLAC portions
 #
 #dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v12_r1.gds")
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v14.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v15.gds")
 # Test structures
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v4.GDS")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v4nool100.GDS")
 # List of test structure cells
 SLAC_TS_List = ["AC_MidGap_Block", "AC_NoGap_Block", "AC_WideGapBlock", "DJ_Block", "RT_T3x3_PSTOP_Block"]
 
-CellFill = True # turn on/off the layout editor fill algorithm
-InvertOF = True # turn on inversion of OF to NWD
+CellFill = False # turn on/off the layout editor fill algorithm
+InvertOF = False # turn on inversion of OF to NWD
 ZA_Fill = True
 
 OTL = 201  # outline for drawing
@@ -1550,8 +1557,8 @@ for i in range(len(AC_Type)):
     makeAssy(Assy_AC, clist)
 #   add ZA Fill
     if (ZA_Fill):
-        addZAFill(Assy_AC, ZA, WLayer2, ZA_FillCell)
         print(cname + " ZA Fill")
+        addZAFill(Assy_AC, ZA, WLayer2, ZA_FillCell)
     CellList.append(cname)
 #
 #	 DJ LGAD Cells
@@ -1566,8 +1573,8 @@ for i in range(len(DJ_Type)):
     makeAssy(Assy_DJ, clist)
     #   add ZA Fill
     if (ZA_Fill):
-        addZAFill(Assy_DJ, ZA, WLayer2, ZA_FillCell)
         print(cname + " ZA Fill")
+        addZAFill(Assy_DJ, ZA, WLayer2, ZA_FillCell)
     CellList.append(cname)
     #
     #
@@ -1645,6 +1652,18 @@ for i in range(2):
     #   add ZA Fill
     if (ZA_Fill):
         addZAFill(c_3mm, ZA, WLayer2, ZA_FillCell)
+        #   remove extra fill in LL corners
+        dr.point(366634, 372454)
+        dr.cSelect()
+        dr.point(-2651794, 353055)
+        dr.cSelect()
+        dr.point(382153, -2614937)
+        dr.point(382153, -2620757)
+        dr.cSelect()
+        dr.point(358875, -2644035)
+        dr.cSelect()
+        dr.deleteSelect()
+        dr.deselectAll()
         print(cname + " ZA Fill")
     CellList.append(cname)
     CellList.append(cname)
@@ -1664,6 +1683,18 @@ c_3mm.addCellref(Outline, point(0,0))
 c_3mm.addCellref(exedge_PWD, point(0, 0))
 if (ZA_Fill):
     addZAFill(c_3mm, ZA, WLayer2, ZA_FillCell)
+    #   remove extra fill in LL corners
+    dr.point(366634, 372454)
+    dr.cSelect()
+    dr.point(-2651794, 353055)
+    dr.cSelect()
+    dr.point(382153, -2614937)
+    dr.point(382153, -2620757)
+    dr.cSelect()
+    dr.point(358875, -2644035)
+    dr.cSelect()
+    dr.deleteSelect()
+    dr.deselectAll()
     print(cname + " ZA Fill")
 CellList.append(cname)
 
@@ -1720,14 +1751,14 @@ for i in range(len(CellList)):
     p = point(Rx, Ry)
     Ret.addCellref(cnew, p)
 
-
+#dr.stripUnneeded()
 print(CellList)
 # import os
 from pathlib import Path
 
 home_directory = Path.home()
 
-gdsversion = "25_r2"
+gdsversion = "25_r5"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 print(gdsfile)
 
