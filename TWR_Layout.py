@@ -626,21 +626,26 @@ def cArray(pitch, length, active):
     return NstX, NstY, pref, poff
 
 import time
+import sys
+
 def addZAFill(Assy, zalyr, templyr, fillCell):
 #   add ZA Fill
 
     start_time = time.time()
     dr.setCell(Assy)
     l.booleanTool.boolOnLayer(ZA, 0, templyr, 'A invert', 0, 0, 2)
-
     Assy.selectLayer(templyr)
+    dr.currentCell.sizeAdjustSelect(-7000,0)
     dr.fillSelectedShapes(fillCell, 0)
+#   debug
+#    l.drawing.saveFile("/Users/lipton/Test_ZA4.gds")
+#    sys.exit()
 #
-#   Fix lower left edge issues
+#   Fix lower left edge issues - removed after size adjust
 #
-    dr.point(-2654656,-2596276)
-    dr.cSelect()
-    dr.deleteSelect()
+##    dr.point(-2654656,-2596276)
+##    dr.cSelect()
+##    dr.deleteSelect()
     Assy.deleteLayer(templyr)
 #   delete edge
     mult = [[-1,1], [1,1], [1, -1], [-1,-1]]
@@ -668,21 +673,26 @@ setup.gdsTextToPolygonDefaultWidth = 200000
 setup.defaultTextWidth = 200000
 
 SetUp = setup()  # work around as static string variables are not handled correctly
+
+# import os
+from pathlib import Path
+home_directory = Path.home()
+
 # Layer definitions
 
 #
 #   Import SLAC portions
 #
-#dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v12_r1.gds")
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v15.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v16.gds")
 # Test structures
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v4nool100.GDS")
 # List of test structure cells
 SLAC_TS_List = ["AC_MidGap_Block", "AC_NoGap_Block", "AC_WideGapBlock", "DJ_Block", "RT_T3x3_PSTOP_Block"]
 
-CellFill = False # turn on/off the layout editor fill algorithm
-InvertOF = False # turn on inversion of OF to NWD
+CellFill = True # turn on/off the layout editor fill algorithm
+InvertOF = True # turn on inversion of OF to NWD
 ZA_Fill = True
+Fix_ZA = False
 
 OTL = 201  # outline for drawing
 OD = 1  # Defines active window
@@ -808,7 +818,7 @@ FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
 
 # Cell for ZA fill
 ZA_FillCell = NewCell("Za_Fill")
-ZA_FillCell.addBox(-2000, -2000, 4000, 4000, ZA)
+ZA_FillCell.addBox(-3000, -3000, 6000, 6000, ZA)
 ZA_FillCell.addBox(-4000, -4000, 8000, 8000, OTL)
 
 
@@ -1334,8 +1344,6 @@ e = adddrBoxOD(cpad, -djcorner // 2, -djcorner // 2, \
 #
 ##############################################
 #
-# Reach through pixel and array
-#
 # RT inter pixel gap
 RTGap = [80000, 16000]
 RTRound = [5000, 4000]  # corner rounding radius
@@ -1652,18 +1660,19 @@ for i in range(2):
     #   add ZA Fill
     if (ZA_Fill):
         addZAFill(c_3mm, ZA, WLayer2, ZA_FillCell)
+        if (Fix_ZA):
         #   remove extra fill in LL corners
-        dr.point(366634, 372454)
-        dr.cSelect()
-        dr.point(-2651794, 353055)
-        dr.cSelect()
-        dr.point(382153, -2614937)
-        dr.point(382153, -2620757)
-        dr.cSelect()
-        dr.point(358875, -2644035)
-        dr.cSelect()
-        dr.deleteSelect()
-        dr.deselectAll()
+            dr.point(366634, 372454)
+            dr.cSelect()
+            dr.point(-2651794, 353055)
+            dr.cSelect()
+            dr.point(382153, -2614937)
+            dr.point(382153, -2620757)
+            dr.cSelect()
+            dr.point(358875, -2644035)
+            dr.cSelect()
+            dr.deleteSelect()
+            dr.deselectAll()
         print(cname + " ZA Fill")
     CellList.append(cname)
     CellList.append(cname)
@@ -1684,17 +1693,18 @@ c_3mm.addCellref(exedge_PWD, point(0, 0))
 if (ZA_Fill):
     addZAFill(c_3mm, ZA, WLayer2, ZA_FillCell)
     #   remove extra fill in LL corners
-    dr.point(366634, 372454)
-    dr.cSelect()
-    dr.point(-2651794, 353055)
-    dr.cSelect()
-    dr.point(382153, -2614937)
-    dr.point(382153, -2620757)
-    dr.cSelect()
-    dr.point(358875, -2644035)
-    dr.cSelect()
-    dr.deleteSelect()
-    dr.deselectAll()
+    if (Fix_ZA):
+        dr.point(366634, 372454)
+        dr.cSelect()
+        dr.point(-2651794, 353055)
+        dr.cSelect()
+        dr.point(382153, -2614937)
+        dr.point(382153, -2620757)
+        dr.cSelect()
+        dr.point(358875, -2644035)
+        dr.cSelect()
+        dr.deleteSelect()
+        dr.deselectAll()
     print(cname + " ZA Fill")
 CellList.append(cname)
 
@@ -1753,12 +1763,8 @@ for i in range(len(CellList)):
 
 #dr.stripUnneeded()
 print(CellList)
-# import os
-from pathlib import Path
 
-home_directory = Path.home()
-
-gdsversion = "25_r5"
+gdsversion = "25_r7"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 print(gdsfile)
 
