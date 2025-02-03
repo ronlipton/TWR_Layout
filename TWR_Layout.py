@@ -265,64 +265,6 @@ def Space_1d(width, spacing):
     return out_points
 
 
-# def Make_M1M2_Mesh(Prefix, Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, CA_Pitch, CA, V1):
-#     #
-#     #   Make mesh contact with Metal 1 and 2
-#     cd = NewCell(Prefix + "_M1M2_Mesh")
-#     M1Str = NewCell(Prefix + "_M1_strip")
-#     e = M1Str.addBox(-Pad_Widths[0], -Len_XY[1] // 2, 2 * Pad_Widths[0], Len_XY[1], Pad_Layers[0])
-#     ypoints = Space_1d(Len_XY[1], CA_Pitch)
-#     for k in range(len(ypoints)):
-#         e = M1Str.addCellref(CA, point(0, ypoints[k]))
-#     M1_strips = Space_1d(Len_XY[0], M12_Pitch[0])
-#     for k in range(len(M1_strips)):
-#         e = cd.addCellref(M1Str, point(M1_strips[k], 0))
-#     #  Metal two connection
-#     M2Str = NewCell(Prefix + "_M2_Strip")
-#     e = M2Str.addBox(-Len_XY[0] // 2, -Pad_Widths[1], Len_XY[0], 2 * Pad_Widths[1], M2)
-#     for k in range(len(M1_strips)):
-#         e = M2Str.addCellref(V1, point(M1_strips[k], 0))
-#     #
-#     #	M2_Strips = Space_1d(Len_XY[1], M12_Pitch[1])
-#     #	print(M2_Strips)
-#     for k in range(len(ypoints) - 1):
-#         e = cd.addCellref(M2Str, point(0, ypoints[k] + CA_Pitch // 2))
-#     return cd
-#
-#
-# def Make_M1M2M3_Mesh(Prefix, Pad_Layers, Pad_Widths, M12_Pitch, Len_XY, CA_Pitch, CA, Via_list):
-#     #
-#     #   Make mesh contact with Metal 1,2 and 3
-#     V1 = Via_list[0]
-#     V2 = Via_list[1]
-#     cd = NewCell(Prefix + "_M1M2M3_Mesh")
-#     M1Str = NewCell(Prefix + "_M1_strip")
-#     e = M1Str.addBox(-Pad_Widths[0], -Len_XY[1] // 2, 2 * Pad_Widths[0], Len_XY[1], Pad_Layers[0])
-#     ypoints = Space_1d(Len_XY[1], CA_Pitch)
-#     for k in range(len(ypoints)):
-#         e = M1Str.addCellref(CA, point(0, ypoints[k]))
-#     M1_strips = Space_1d(Len_XY[0], M12_Pitch[0])
-#     for k in range(len(M1_strips)):
-#         e = cd.addCellref(M1Str, point(M1_strips[k], 0))
-#
-#     #  Metal two connection
-#     M2Str = NewCell(Prefix + "_M2_Strip")
-#     e = M2Str.addBox(-Len_XY[0] // 2, -Pad_Widths[1], Len_XY[0], 2 * Pad_Widths[1], M2)
-#     for k in range(len(M1_strips)):
-#         e = M2Str.addCellref(V1, point(M1_strips[k], 0))
-#     for k in range(len(ypoints) - 1):
-#         e = cd.addCellref(M2Str, point(0, ypoints[k] + CA_Pitch // 2))
-#
-#         # Metal 3 connection
-#     M3Str = NewCell(Prefix + "_M3_Strip")
-#     e = M3Str.addBox(-Len_XY[0] // 2, -Pad_Widths[2], Len_XY[0], 2 * Pad_Widths[2], M3)
-#     for k in range(len(M1_strips)):
-#         e = M3Str.addCellref(V2, point(M1_strips[k], 0))
-#     for k in range(len(ypoints) - 1):
-#         e = cd.addCellref(M3Str, point(0, ypoints[k] + CA_Pitch // 2))
-#     return cd
-
-
 def make_2dmesh(cellname, Metal_list, mlayer, via_list):
 #   make a metal mesh with layer numbers defined on mlayer, vias on via_list and spacings and numbers in Metal_list
 #   Meash is assumed to be a square
@@ -352,19 +294,6 @@ def make_2dmesh(cellname, Metal_list, mlayer, via_list):
     return ep
 
 
-# def Place_Pad(cd, Name, SXY_Active, SPitch, Slength):
-#     astr = NewCell(Name + "_Arr")
-#     #	Strip_Arrays.append(Strip_name[i] + "_Arr")
-#     NstX = SXY_Active // SPitch
-#     NstY = SXY_Active // Slength
-#     xoff = -((NstX - 1) * SPitch) // 2  # bottom left
-#     yoff = -((NstY - 1) * Slength) // 2  # bottom left
-#     pref = point(xoff, yoff)
-#     poff = point(xoff + SPitch, yoff + Slength)
-#     e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
-#     return astr
-
-
 def erdrawOD(c, xgr, ygr, wlow, whigh, layer, radius, OD, OD_inset):
     # draw implant ring shape with inset active layer (OD)
     erdraw(c, xgr, ygr, wlow, whigh, layer, radius)  # draw the ring
@@ -376,29 +305,6 @@ def adddrBoxOD(c, xb, yb, xl, yl, rad, layer, OD, OD_inset):
     adddrBox(c, xb, yb, xl, yl, rad, layer)
     adddrBox(c, xb + OD_inset, yb + OD_inset, xl - 2 * OD_inset, yl - 2 * OD_inset, rad, OD)
     return 1
-
-
-# def make_EdgeArray(Cname, BCell, ECell, NX, NY, DX, DY):
-#     #  make an NX by NY array of BCells with the ECell at the 4 edges.
-#     # at some point need to add mirroring
-#     # NX, NY
-#     dcell = NewCell(Cname)
-#     xecell = (DX * NX / 2) - DX / 2
-#     yecell = (DY * NY / 2) - DY / 2
-#     dcell.addCellref(ECell, point(xecell, yecell))
-#     dcell.addCellref(ECell, point(-xecell, yecell))
-#     dcell.addCellref(ECell, point(-xecell, -yecell))
-#     dcell.addCellref(ECell, point(xecell, -yecell))
-#     p1 = point(-xecell + DX, -yecell)
-#     p2 = point(-xecell + 2 * DX, -yecell + DY)
-#     dcell.addCellrefArray(BCell, p1, p2, NX - 2, NY)
-#     p1 = point(-xecell, -yecell + DY)
-#     p2 = point(-xecell, -yecell + 2 * DY)
-#     dcell.addCellrefArray(BCell, p1, p2, 1, NY - 2)
-#     p1 = point(xecell, -yecell + DY)
-#     p2 = point(xecell, -yecell + 2 * DY)
-#     dcell.addCellrefArray(BCell, p1, p2, 1, NY - 2)
-#     return dcell
 
 
 def roundGrid(x, grid):
@@ -643,9 +549,6 @@ def addZAFill(Assy, zalyr, templyr, fillCell):
 #
 #   Fix lower left edge issues - removed after size adjust
 #
-##    dr.point(-2654656,-2596276)
-##    dr.cSelect()
-##    dr.deleteSelect()
     Assy.deleteLayer(templyr)
 #   delete edge
     mult = [[-1,1], [1,1], [1, -1], [-1,-1]]
@@ -657,6 +560,46 @@ def addZAFill(Assy, zalyr, templyr, fillCell):
     print("ZA FIll time elapsed: {:.2f}s".format(time.time() - start_time))
     return True
 
+# def addMxFill(Assy, lyr, templyr, fillCell):
+# #   add Mx Fill
+#     start_time = time.time()
+#     dr.setCell(Assy)
+#     l.booleanTool.boolOnLayer(lyr, 0, templyr, 'A invert', 0, 0, 2)
+#     Assy.selectLayer(templyr)
+#     dr.currentCell.sizeAdjustSelect(-2000,0)
+#     dr.fillSelectedShapes(fillCell, 0)
+# #   debug
+#     l.drawing.saveFile("/Users/lipton/Test_ZA5.gds")
+# #    sys.exit()
+#     Assy.deleteLayer(templyr)
+#     print("Mx FIll time elapsed: {:.2f}s".format(time.time() - start_time))
+#     return True
+
+def addMxFill(Assy, exclude,  tlayer, fillCell):
+#   add Mx Fill
+#   Tlayer[1] = outline, Tlayer[2] - fill, mask TLayer[3] - areas to exclude
+    start_time = time.time()
+    dr.setCell(Assy)
+    for ilyr in range(len(exclude)):
+    	l.booleanTool.boolOnLayer(tlayer[2],exclude[ilyr],tlayer[2],"A+B",0,0,2)
+    dr.deselectAll()
+    Assy.selectLayer(tlayer[2])
+    dr.currentCell.sizeAdjustSelect(4000,0)
+    l.booleanTool.boolOnLayer(tlayer[0],tlayer[2],tlayer[1],"A-B",0,0,2)
+    dr.deselectAll()
+    Assy.selectLayer(tlayer[1])
+    dr.currentCell.sizeAdjustSelect(-2000,0)
+    dr.fillSelectedShapes(fillCell, 0)
+#   debug
+    debug = False
+    if debug:
+        test = dr.currentCell.cellName
+        l.drawing.saveFile("/Users/lipton/" + test + ".gds")
+    else:
+        Assy.deleteLayer(tlayer[1])
+        Assy.deleteLayer(tlayer[2])
+    print("Mx FIll time elapsed: {:.2f}s".format(time.time() - start_time))
+    return True
 
 # -*- codin
 import LayoutScript
@@ -683,16 +626,16 @@ home_directory = Path.home()
 #
 #   Import SLAC portions
 #
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v16.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v17.gds")
 # Test structures
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v4nool100.GDS")
 # List of test structure cells
 SLAC_TS_List = ["AC_MidGap_Block", "AC_NoGap_Block", "AC_WideGapBlock", "DJ_Block", "RT_T3x3_PSTOP_Block"]
 
-CellFill = True # turn on/off the layout editor fill algorithm
+CellFill = True  # turn on/off the layout editor fill algorithm
 InvertOF = True # turn on inversion of OF to NWD
-ZA_Fill = True
-Fix_ZA = False
+ZA_Fill = True # Turn on generation of ZA fill
+Fix_ZA = False  # not needed
 
 OTL = 201  # outline for drawing
 OD = 1  # Defines active window
@@ -801,13 +744,20 @@ M1_Width = 2 * M1_Width_2
 M2_Width = 2 * M2_Width_2
 M3_Width = 2 * M3_Width_2
 
+# Metal layers (M1, M2, M3)
+mlayer = [43, 47, 49]
+
+#   temporary layers
+TLayer = [WLayer1, WLayer2, WLayer3]
+
 #   Default fill parameters
 FLayers = [43, 47, 49]
 FDensity = [25, 25, 25]
 FOffset = [4000, 4000, 4000]
-FWidth = [500, 2000, 2000]
+FWidth = [100, 2000, 2000]
 FSpace = [2000, 4000, 4000]
-FFrame = [10000, 10000, 10000]
+FFrame = [2000, 4000, 4000]
+
 
 # Standard 25% fill cell
 FCell_25 = NewCell("Fill_25pct")
@@ -875,18 +825,27 @@ for i in range(len(Via_Cells)):
     else:
         Via_List.append(ml4x4)
 
+#   ZG Via
+ZG_side = 3000
+
+ZGV = NewCell("ZG_Via1")
+e = adddrBox(ZGV,-ZG_side//2, -ZG_side//2, ZG_side, ZG_side, 0, ZG)
+
 BP_M3_Via_80 = NewCell("BP_M3_via80")
 BPM3Width = 73000
 # 10/24/24 modified for 2 um zg m3 overlap rule
-BPM3Length = 2000
+BPM3Length = 2000 # change from 2000 for RTPixel rule
 ZGM3_ovr = 2000
-e = adddrBox(BP_M3_Via_80, -BPM3Width // 2, -BPM3Length // 2, BPM3Width, BPM3Length, 0, ZG)
+#e = adddrBox(BP_M3_Via_80, -BPM3Width // 2, -BPM3Length // 2, BPM3Width, BPM3Length, 0, ZG)
+e = BP_M3_Via_80.addCellrefArray(ZGV, point(-24000,0),point(-18000,0), 9, 1)
 e = adddrBox(BP_M3_Via_80, -BPM3Width // 2 - ZGM3_ovr, -BPM3Length // 2 - ZGM3_ovr, BPM3Width + 2 * ZGM3_ovr,
              BPM3Length + 2 * ZGM3_ovr, 0, M3)
+
 BP_M3_Via_60 = NewCell("BP_M3_via60")
 BPM3Width = 42000
 # BPM3Length = 3000
-e = adddrBox(BP_M3_Via_60, -BPM3Width // 2, -BPM3Length // 2, BPM3Width, BPM3Length, 0, ZG)
+#e = adddrBox(BP_M3_Via_60, -BPM3Width // 2, -BPM3Length // 2, BPM3Width, BPM3Length, 0, ZG)
+e = BP_M3_Via_60.addCellrefArray(ZGV, point(-18000,0),point(-12000,0), 7, 1)
 e = adddrBox(BP_M3_Via_60, -BPM3Width // 2 - ZGM3_ovr, -BPM3Length // 2 - ZGM3_ovr, BPM3Width + 2 * ZGM3_ovr,
              BPM3Length + 2 * ZGM3_ovr, 0, M3)
 
@@ -981,6 +940,9 @@ Strip_Length = [50000, Str_Length, Str_Length, Str_Length, Str_Length,
 Strip_name = ["Str125", "Str50_DJ", "Str50_DJNPS", "Str50_AC", "Str50_NOGN",
               "Str100_DJ", "Str100_DJNPS", "Str100_AC", "Str100_NOGN",
               "St100AC_20", "St100AC_40", "St100AC_60", "St100AC_80"]
+Strip_Fill = [False, False, False, True, False,
+              False, False, False, False, # was all false
+              True, True, True, True]
 
 Strip_PS = [True, True, False, False, True, True, False, False, True,
             False, False, False, False]
@@ -1136,9 +1098,9 @@ for i in range(len(Strip_Pitch)):
     # Add p-stop
     else:
         rad = 0
-        pswidth = 500
-        psx = SPitch // 2
-        pslen = Slength // 2
+        pswidth = 1000
+        psx = SPitch // 2 + 500
+        pslen = Slength // 2 + 500
         xps = [psx, -psx, -psx, psx]
         yps = [pslen, pslen, -pslen, -pslen]
         erdraw(cd, xps, yps, pswidth, 0, PWD, rad)
@@ -1147,8 +1109,11 @@ for i in range(len(Strip_Pitch)):
     BPinset = 249500
     Row2inset = BPinset + 260000
     # Add fill
-    if CellFill:
-        e = M1M2M3Fill(DCStripn, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
+    if CellFill and Strip_Fill[i]:
+    #    e = M1M2M3Fill(DCStripn, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
+        print(" Cell " + DCStripn)
+    #    e = addMxFill(cd, M1, WLayer2, FCell_25)
+        e = addMxFill(cd, mlayer, TLayer, FCell_25)
 
     if SPitch == 100000:
         cd.addCellref(BP_80, point(0, Slength // 2 - BPinset))
@@ -1269,6 +1234,7 @@ DJIWid_2 = 500
 DJM2_Wid_2 = 1000
 Len_XY = [Pitch[0] - DJInset, Pitch[0] - DJInset]
 M12_Pitch = [2 * M1_Width, 2 * M2_Width]
+DJ_Fill = [False, False]
 
 for i in range(len(Pitch)):
     cpad_name = DJName[i] + "Base"
@@ -1289,18 +1255,23 @@ for i in range(len(Pitch)):
     xpm = lng // 2 - DJRound  # -*- coding: utf-8 -*-
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
-    erdraw(cpad, xm, ym, DJM2_Wid_2 + 2000, DJM2_Wid_2, M2, DJRound)
+    erdraw(cpad, xm, ym, DJM2_Wid_2 + 1000, DJM2_Wid_2, M2, DJRound)
+    # add contact to mesh
+    cpad.addBox(-xpm, -500, lng-DJRound, 1000, M2)
     # Add isolation - assume square
     wbox = Pitch[i] // 2
-    xpm = wbox
+    xpm = wbox+500
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
-    erdraw(cpad, xm, ym, DJIWid_2, 0, PWD, 0)
+    erdraw(cpad, xm, ym, 2*DJIWid_2, 0, PWD, 0)
     #
     e = cpad.addCellref(PCell_Outline[i], point(0, 0))
     # add fill to cell
-    if CellFill:
-        e = M1M2M3Fill(cpad_name, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
+    if CellFill and DJ_Fill[i]:
+    #    e = M1M2M3Fill(cpad_name, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
+        print(" DJ Fill Cell " + cpad_name)
+    #    e = addMxFill(cpad, M1, WLayer2, FCell_25)
+        e = addMxFill(cpad, mlayer, TLayer, FCell_25)
     # cell without central bump
     dpad = NewCell(DJName[i] + "_NoBump")
     e = dpad.addCellref(cpad, point(0, 0))
@@ -1415,13 +1386,13 @@ for i in range(len(RTname)):
 
     # Pad at center
     if RTname[i] == "RTPixel":
-        rtpad.addCellref(BP_80, point(0, 0))
+        rtpad.addCellref(BP_80, point(0, 1000)) # 0->1 for M3 rule
     else:
         rtpad.addCellref(BCell, point(0, 0))
         rtpad.addCellref(M3ZG, point(0, 0))
     # Pixel isolation
 
-    e = makeFrame(rtpad, RTPx_2, 500, PWD)
+    e = makeFrame(rtpad, RTPx_2+500, 1000, PWD)
 
     #   add field plates
     FP_round = RT_JTERound[i] + RT_JTEWidth[i]
@@ -1461,8 +1432,6 @@ ACPitch = Pitch
 Metal_list = [[[33000, 1000, 1000, 17], [33000, 1000, 1000, 17], [33000, 1000, 1000, 17]],
               [[61000, 1000, 1000, 31], [61000, 1000, 1000, 31], [61000, 1000, 1000, 31]],
               [[33000, 1000, 1000, 17], [33000, 1000, 1000, 17], [33000, 1000, 1000, 17]]]
-# Metal layers (M1, M2, M3)
-mlayer = [43, 47, 49]
 ACPitch.append(100000)
 name = ["ACPad_50", "ACPad_100", "ACPad_100D33"]
 aname = ["AC_Array_50", "AC_Array_100", "AC_Array_100D33"]
@@ -1761,10 +1730,11 @@ for i in range(len(CellList)):
     p = point(Rx, Ry)
     Ret.addCellref(cnew, p)
 
-#dr.stripUnneeded()
+dr.setCell(cnam)
+# dr.stripUnneeded()
 print(CellList)
 
-gdsversion = "25_r7"
+gdsversion = "V26_r0"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
 print(gdsfile)
 
