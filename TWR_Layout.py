@@ -560,35 +560,22 @@ def addZAFill(Assy, zalyr, templyr, fillCell):
     print("ZA FIll time elapsed: {:.2f}s".format(time.time() - start_time))
     return True
 
-# def addMxFill(Assy, lyr, templyr, fillCell):
-# #   add Mx Fill
-#     start_time = time.time()
-#     dr.setCell(Assy)
-#     l.booleanTool.boolOnLayer(lyr, 0, templyr, 'A invert', 0, 0, 2)
-#     Assy.selectLayer(templyr)
-#     dr.currentCell.sizeAdjustSelect(-2000,0)
-#     dr.fillSelectedShapes(fillCell, 0)
-# #   debug
-#     l.drawing.saveFile("/Users/lipton/Test_ZA5.gds")
-# #    sys.exit()
-#     Assy.deleteLayer(templyr)
-#     print("Mx FIll time elapsed: {:.2f}s".format(time.time() - start_time))
-#     return True
-
-def addMxFill(Assy, exclude,  tlayer, fillCell):
+def addMxFill(Assy, exclude,  tlayer, fillCell, csize, osize):
 #   add Mx Fill
-#   Tlayer[1] = outline, Tlayer[2] - fill, mask TLayer[3] - areas to exclude
+#   Tlayer[1] = outline, Tlayer[2] - fill, mask TLayer[3] - areas to exclude (inverted for mask)
+#   csize - dimension to expand metal to eliminate voids
+#   osize - dimension to compress frame
     start_time = time.time()
     dr.setCell(Assy)
     for ilyr in range(len(exclude)):
     	l.booleanTool.boolOnLayer(tlayer[2],exclude[ilyr],tlayer[2],"A+B",0,0,2)
     dr.deselectAll()
     Assy.selectLayer(tlayer[2])
-    dr.currentCell.sizeAdjustSelect(4000,0)
+    dr.currentCell.sizeAdjustSelect(csize,0)
     l.booleanTool.boolOnLayer(tlayer[0],tlayer[2],tlayer[1],"A-B",0,0,2)
     dr.deselectAll()
     Assy.selectLayer(tlayer[1])
-    dr.currentCell.sizeAdjustSelect(-2000,0)
+    dr.currentCell.sizeAdjustSelect(osize,0)
     dr.fillSelectedShapes(fillCell, 0)
 #   debug
     debug = False
@@ -605,7 +592,7 @@ def addMxFill(Assy, exclude,  tlayer, fillCell):
 import LayoutScript
 from LayoutScript import *
 from pprint import pprint
-
+from datetime import datetime
 
 l = project.newLayout()  # open new instance of layout class
 global dr
@@ -621,6 +608,8 @@ SetUp = setup()  # work around as static string variables are not handled correc
 from pathlib import Path
 home_directory = Path.home()
 
+
+
 # Layer definitions
 
 #
@@ -632,9 +621,9 @@ dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Tes
 # List of test structure cells
 SLAC_TS_List = ["AC_MidGap_Block", "AC_NoGap_Block", "AC_WideGapBlock", "DJ_Block", "RT_T3x3_PSTOP_Block"]
 
-CellFill = True  # turn on/off the layout editor fill algorithm
-InvertOF = True # turn on inversion of OF to NWD
-ZA_Fill = True # Turn on generation of ZA fill
+CellFill = False  # turn on/off the layout editor fill algorithm
+InvertOF = False # turn on inversion of OF to NWD
+ZA_Fill = False # Turn on generation of ZA fill
 Fix_ZA = False  # not needed
 
 OTL = 201  # outline for drawing
@@ -834,8 +823,9 @@ e = adddrBox(ZGV,-ZG_side//2, -ZG_side//2, ZG_side, ZG_side, 0, ZG)
 BP_M3_Via_80 = NewCell("BP_M3_via80")
 BPM3Width = 73000
 # 10/24/24 modified for 2 um zg m3 overlap rule
-BPM3Length = 2000 # change from 2000 for RTPixel rule
-ZGM3_ovr = 2000
+BPM3Length = 3000 # change from 2000 for RTPixel rule
+#  change the overlap to 1000
+ZGM3_ovr = 1000
 #e = adddrBox(BP_M3_Via_80, -BPM3Width // 2, -BPM3Length // 2, BPM3Width, BPM3Length, 0, ZG)
 e = BP_M3_Via_80.addCellrefArray(ZGV, point(-24000,0),point(-18000,0), 9, 1)
 e = adddrBox(BP_M3_Via_80, -BPM3Width // 2 - ZGM3_ovr, -BPM3Length // 2 - ZGM3_ovr, BPM3Width + 2 * ZGM3_ovr,
@@ -852,7 +842,7 @@ e = adddrBox(BP_M3_Via_60, -BPM3Width // 2 - ZGM3_ovr, -BPM3Length // 2 - ZGM3_o
 # 80 micron bond pad
 BP_80 = NewCell("Bond_Pad_80")
 padWidth_80 = 77000
-padLength_80 = 205000
+padLength_80 = 204000
 OXLength_80 = 190000
 OXWidth_80 = 71000
 e = adddrBox(BP_80, -OXWidth_80 // 2, -OXLength_80 // 2, OXWidth_80, OXLength_80, 0, ZP)
@@ -868,8 +858,8 @@ OXLength_60 = 190000
 OXWidth_60 = 51000
 e = adddrBox(BP_60, -OXWidth_60 // 2, -OXLength_60 // 2, OXWidth_60, OXLength_60, 0, ZP)
 e = adddrBox(BP_60, -padWidth_60 // 2, -padLength_60 // 2, padWidth_60, padLength_60, 0, ZA)
-e = BP_60.addCellref(BP_M3_Via_60, point(0, padLength_60 // 2 - 3000))
-e = BP_60.addCellref(BP_M3_Via_60, point(0, -padLength_60 // 2 + 3000))
+e = BP_60.addCellref(BP_M3_Via_60, point(0, padLength_60 // 2 - 2500))
+e = BP_60.addCellref(BP_M3_Via_60, point(0, -padLength_60 // 2 + 2500))
 
 #   Bump Pad_Cell
 BCell = NewCell("BumpPad")
@@ -1109,11 +1099,13 @@ for i in range(len(Strip_Pitch)):
     BPinset = 249500
     Row2inset = BPinset + 260000
     # Add fill
+    csize = 4000
+    osize = -2000
     if CellFill and Strip_Fill[i]:
     #    e = M1M2M3Fill(DCStripn, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
         print(" Cell " + DCStripn)
     #    e = addMxFill(cd, M1, WLayer2, FCell_25)
-        e = addMxFill(cd, mlayer, TLayer, FCell_25)
+        e = addMxFill(cd, mlayer, TLayer, FCell_25, csize, osize)
 
     if SPitch == 100000:
         cd.addCellref(BP_80, point(0, Slength // 2 - BPinset))
@@ -1267,11 +1259,13 @@ for i in range(len(Pitch)):
     #
     e = cpad.addCellref(PCell_Outline[i], point(0, 0))
     # add fill to cell
+    csize = 2000
+    osize = 0
     if CellFill and DJ_Fill[i]:
     #    e = M1M2M3Fill(cpad_name, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
         print(" DJ Fill Cell " + cpad_name)
     #    e = addMxFill(cpad, M1, WLayer2, FCell_25)
-        e = addMxFill(cpad, mlayer, TLayer, FCell_25)
+        e = addMxFill(cpad, mlayer, TLayer, FCell_25, csize, osize)
     # cell without central bump
     dpad = NewCell(DJName[i] + "_NoBump")
     e = dpad.addCellref(cpad, point(0, 0))
@@ -1734,10 +1728,13 @@ dr.setCell(cnam)
 # dr.stripUnneeded()
 print(CellList)
 
-gdsversion = "V26_r0"
-gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
+now = datetime.now()
+filetime = now.strftime("%Y_%m_%d_%H_%M")
+filefill = f"{int(CellFill)}{int(InvertOF)}{int(ZA_Fill)}"
+gdsversion = "V26_"
+gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion + filetime + ".gds"
 print(gdsfile)
 
 l.drawing.saveFile(gdsfile)
 
-print("Writing Version " + gdsversion +  " Python script completed")
+print("Writing File " + gdsfile +  " Python script completed")
