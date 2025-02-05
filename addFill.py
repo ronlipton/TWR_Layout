@@ -1,14 +1,17 @@
 import LayoutScript
 from LayoutScript import *
 from pprint import pprint
+import time
+import sys
+# from TWR_Layout import ZA_FillCell
 
 
-def addMxFill(Assy, exclude, tlayer, fillCell, csize, osize):
+def addMZFill(Assy, exclude, tlayer, fillCell, csize, osize):
     #   add Mx Fill
     #   Tlayer[1] = outline, Tlayer[2] - fill, mask TLayer[3] - areas to exclude
     #   csize - dimension to expand metal
     #   osuize - dimension to compress frame
-    #	start_time = time.time()
+    start_time = time.time()
     dr.setCell(Assy)
     for ilyr in range(len(exclude)):
         l.booleanTool.boolOnLayer(tlayer[2], exclude[ilyr], tlayer[2], "A+B", 0, 0, 2)
@@ -28,7 +31,7 @@ def addMxFill(Assy, exclude, tlayer, fillCell, csize, osize):
     else:
         Assy.deleteLayer(tlayer[1])
         Assy.deleteLayer(tlayer[2])
-    #	print("Mx FIll time elapsed: {:.2f}s".format(time.time() - start_time))
+    print("Mx FIll time elapsed: {:.2f}s".format(time.time() - start_time))
     return True
 
 
@@ -47,33 +50,38 @@ def main():
     # import os
     from pathlib import Path
     home_directory = Path.home()
-    gdsversion = "V26_r0"
-    ingdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
-
+    gdsversion = "V26_r1"
+    ingdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_000" + gdsversion + ".gds"
+    outgdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/Test_" + gdsversion + ".gds"
     # Input Reticule
     dr.importFile(ingdsfile)
     #	l.drawing.saveFile("/Users/lipton/Test" +  ".gds")
-    print(dr.existCellname("Fill_25pct"))
-    fCell = dr.findCell("Fill_25pct")
-    print(fCell)
-    mlayer = [43, 47, 49]
-    tlayer = [201, 202, 203]
+    print(dr.existCellname("Za_Fill"))
+    CCell = dr.findCell("Fill_25pct")
+    ZAfill = dr.findCell("Za_Fill")
+    fCell = [CCell, ZAfill]
+    # print(fCell)
+    mlayer = [[43, 47, 49],[57, 57, 57]]
+    tlayer = [[201, 202, 203],[201, 202, 203]]
+    csize = [2000, 2000]
+    osize = [0, 0]
 
-    cmod = ["DJ_50Base", "DJ_100Base"]
-    for i in range(len(cmod)):
-        cnam = cmod[i]
-        dr.setCell(cnam)
-        Assy = dr.currentCell
-        csize = 2000
-        osize = 0
-        addMxFill(Assy, mlayer, tlayer, fCell, csize, osize)
+    Str_100_Cell = dr.findCell("Assy_str_3mm_100")
+    ZA_exclude = [228, 57, 57]
+    tlyr = [201, 202, 203]
+    addMZFill(Str_100_Cell, ZA_exclude, tlyr, ZAfill, csize[0], osize[0])
 
+    # cmod = [["DJ_50", "DJ_100"],["Str100_AC", "Str100_DJ"]]
+    # for j in range(len(mlayer)):
+    #     for i in range(len(cmod[j])):
+    #         cnam = cmod[j][i]
+    #         dr.setCell(cnam)
+    #         Assy = dr.currentCell
+    #         addMZFill(Assy, mlayer[i], tlayer[i], fCell[i], csize[i], osize[i])
 
 #	print(outgdsfile)
-
-#	l.drawing.saveFile(outgdsfile)
-
-#	print("Writing Version " + gdsversion +  " Python script completed")
+    l.drawing.saveFile(outgdsfile)
+    print("Writing Version " + gdsversion +  " Python script completed")
 
 if __name__ == "__main__":
     main()

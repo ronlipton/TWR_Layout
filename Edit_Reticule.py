@@ -1,48 +1,60 @@
-# -*- codin
 import LayoutScript
 from LayoutScript import *
-from datetime import datetime
+import datetime
 
-from pprint import pprint
+def editGDS(gdslist):
 
+    from pprint import pprint
 
-l = project.newLayout()  # open new instance of layout class
-global dr
-dr = l.drawing
-# pointer to the main drawing
-setup.gdsTextToPolygon = True
-setup.gdsTextToPolygonDefaultWidth = 200000
-setup.defaultTextWidth = 200000
+    l = project.newLayout()  # open new instance of layout class
+    global dr
+    dr = l.drawing
+    # pointer to the main drawing
+    #
+    #
+    # Input Reticule
+    dr.importFile(gdslist[0])
 
-SetUp = setup()  # work around as static string variables are not handled correctly
+    update = [False, False, True]
+    # Update borders
+    #  - note that ZA fill is not executed
+    if update[0]: dr.updateFile(gdslist[1])
 
-# import os
-from pathlib import Path
-home_directory = Path.home()
-gdsversion = "V26_r0"
-now = datetime.now()
-filetime = now.strftime("_%Y_%m_%d_%H_%M")
-ingdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
-outgdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/Edit_" + gdsversion + filetime + ".gds"
+    cnam = "Reticule"
+    dr.setCell(cnam)
+    dr.stripUnneeded()  # remove unneeded calls
 
-#
-#
-# Input Reticule
-dr.importFile(ingdsfile)
+    print("Writing " + gdslist[2])
+    l.drawing.saveFile(gdslist[2])
+    return
 
-update = [False, False, True]
-# Update borders
-#  - note that ZA fill is not executed
-if update[0]: dr.updateFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v17.gds")
-# Update Test structures
-if update[1]: dr.updateFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v4nool100.GDS")
-# other update
-if update[2]: dr.updateFile("/Users/lipton/Dropbox/Programming/TWR_layout/Bond_Pad_80_mod.gds")
+def main():
+    global l
+    l = project.newLayout()  # open new instance of layout class
+    global dr
+    dr = l.drawing
+    # pointer to the main drawing
+    setup.gdsTextToPolygon = True
+    setup.gdsTextToPolygonDefaultWidth = 200000
+    setup.defaultTextWidth = 200000
 
-cnam = "Reticule"
-dr.setCell(cnam)
-dr.stripUnneeded()  # remove unneeded calls
+    SetUp = setup()  # work around as static string variables are not handled correctly
 
-print("Writing " + outgdsfile)
+    # import os
+    from pathlib import Path
+    home_directory = Path.home()
+    gdsversion = "V26_r0"
+    now = datetime.datetime.now()
+    filetime = now.strftime("_%Y_%m_%d_%H_%M")
+    #  input main gds file
+    ingdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" + gdsversion + ".gds"
+    # file containing cells to update
+    modgdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_" +  "compile_border_v17.gds"
+    # time stamped updated file
+    outgdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/Edit_" + gdsversion + filetime + ".gds"
+    gds_list = [ingdsfile, modgdsfile, outgdsfile]
+    editGDS(gds_list)
+    return
 
-l.drawing.saveFile(outgdsfile)
+if __name__ == "__main__":
+    main()

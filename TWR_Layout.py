@@ -126,42 +126,6 @@ def adddrBox(c, xb, yb, xl, yl, rad, layer):
     return 1
 
 
-# def grarray(c, nr, xg, yg, lyr, low, high, rad):
-#     #
-#     #   Draw guard ring array of nr guard rings
-#     #
-#     for ind in range(nr):
-#         grdraw(c, xg, yg, low[ind], high[ind], lyr, rad[ind])
-#
-#
-# def drcorner(xarr, yarr, npts, layer):
-#     #
-#     #   draw 4 corners
-#     #   points assumed as upper right
-#     #
-#     dr.clearPoints()
-#     dr.activeLayer = layer
-#     for ind in range(npts):
-#         dr.point(xarr[ind], yarr[ind])
-#     dr.polygon()
-#     # Upper left
-#     dr.clearPoints()
-#     dr.activeLayer = layer
-#     for ind in range(npts):
-#         dr.point(-xarr[ind], yarr[ind])
-#     dr.polygon()
-#     # lower left
-#     dr.clearPoints()
-#     dr.activeLayer = layer
-#     for ind in range(npts):
-#         dr.point(-xarr[ind], -yarr[ind])
-#     dr.polygon()
-#     # lower right
-#     dr.clearPoints()
-#     dr.activeLayer = layer
-#     for ind in range(npts):
-#         dr.point(xarr[ind], -yarr[ind])
-#     dr.polygon()
 
 def findCell_CK(Cell_name):
 #
@@ -185,45 +149,6 @@ def makeAssy(cel, celllist):
         #    print(cnew, " - ", clist[ind])
         cel.addCellref(cnew, p)
 
-
-# def bpArray(celtgt, bpcell, xur, yur):
-#     #
-#     #  make an 2x2 array of corner bond pad of bpcell
-#     #
-#     p = point(xur, yur)
-#     e = celtgt.addCellref(bpcell, p)
-#     p = point(xur, -yur)
-#     e = celtgt.addCellref(bpcell, p)
-#     p = point(-xur, -yur)
-#     e = celtgt.addCellref(bpcell, p)
-#     p = point(-xur, yur)
-#     e = celtgt.addCellref(bpcell, p)
-#
-#
-# def padArray(homecell, padcell, npad, xstart, xpitch, ypos, smwidth):
-#     #
-#     # x array of npad pad cells
-#     xpad = xstart
-#     for ind in range(npad):
-#         p = point(xpad, ypos)
-#         e = homecell.addCellref(padcell, p)
-#         #    print(p,"-",)
-#         #    pa = pointArray()
-#         #    pa.attach(xpad-smwidth, 0)
-#         #    pa.attach(xpad+smwidth, 0)
-#         #    pa.attach(xpad+smwidth, ypos)
-#         #    pa.attach(xpad-smwidth, ypos)
-#         #    pa.attach(xpad-smwidth, 0)
-#         #    e = homecell.addBox(pa, 6)
-#         xpad = xpad + xpitch
-#
-#
-# def CSpace(W, S, L):
-#     # Calculate spaces for uniform mesh (microns) with line width W and total lenght L
-#     nex = (W - S) / (L + S)
-#     nfl = int(nex)
-#     Spac = (W - nfl * L) / (nfl - 1)
-#     return Spac
 
 
 def NewCell(CName):
@@ -588,6 +513,34 @@ def addMxFill(Assy, exclude,  tlayer, fillCell, csize, osize):
     print("Mx FIll time elapsed: {:.2f}s".format(time.time() - start_time))
     return True
 
+def addMZFill(Assy, exclude, tlayer, fillCell, csize, osize):
+    #   add Mx, ZA  Fill
+    #   Tlayer[1] = outline, Tlayer[2] - fill, mask TLayer[3] - areas to exclude
+    #   csize - dimension to expand metal
+    #   osuize - dimension to compress frame
+    start_time = time.time()
+    dr.setCell(Assy)
+    for ilyr in range(len(exclude)):
+        l.booleanTool.boolOnLayer(tlayer[2], exclude[ilyr], tlayer[2], "A+B", 0, 0, 2)
+    dr.deselectAll()
+    Assy.selectLayer(tlayer[2])
+    dr.currentCell.sizeAdjustSelect(csize, 0)
+    l.booleanTool.boolOnLayer(tlayer[0], tlayer[2], tlayer[1], "A-B", 0, 0, 2)
+    dr.deselectAll()
+    Assy.selectLayer(tlayer[1])
+    dr.currentCell.sizeAdjustSelect(osize, 0)
+    dr.fillSelectedShapes(fillCell, 0)
+    #   debug
+    debug = False
+    if debug:
+        test = dr.currentCell.cellName
+        l.drawing.saveFile("/Users/lipton/" + test + ".gds")
+    else:
+        Assy.deleteLayer(tlayer[1])
+        Assy.deleteLayer(tlayer[2])
+    print("Mx FIll time elapsed: {:.2f}s".format(time.time() - start_time))
+    return True
+
 # -*- codin
 import LayoutScript
 from LayoutScript import *
@@ -621,9 +574,9 @@ dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Tes
 # List of test structure cells
 SLAC_TS_List = ["AC_MidGap_Block", "AC_NoGap_Block", "AC_WideGapBlock", "DJ_Block", "RT_T3x3_PSTOP_Block"]
 
-CellFill = False  # turn on/off the layout editor fill algorithm
-InvertOF = False # turn on inversion of OF to NWD
-ZA_Fill = False # Turn on generation of ZA fill
+CellFill = True  # turn on/off the layout editor fill algorithm
+InvertOF = True # turn on inversion of OF to NWD
+ZA_Fill = True # Turn on generation of ZA fill
 Fix_ZA = False  # not needed
 
 OTL = 201  # outline for drawing
@@ -709,7 +662,7 @@ CA_Width = 40  # half width of Tower contact
 CA_Space = 200  # Spacing for CA contact array
 
 V1_Width = 50  # V1 half width
-V1_Space = 200
+V1_Space = 100
 
 V2_Width = 50  # V2 half width
 V2_Space = 200
@@ -1037,6 +990,10 @@ erdrawOD(cjte_AC, xm, ym, JTEInset - 2000, JTEWidth, JTE, JTERound, OD, OD_inset
 #  Add ND
 erdrawOD(cjte_AC, xm, ym, JTEInset - 2000, JTEWidth, ND, JTERound, OD, OD_inset)
 
+PWD_X = NewCell("PWD_Cross")
+e = PWD_X.addBox(-115000, -3000000, 230000, 6000000, PWD)
+e = PWD_X.addBox(-3000000, -115000, 6000000, 230000, PWD)
+
 sgap = 4000
 
 for i in range(len(Strip_Pitch)):
@@ -1068,9 +1025,9 @@ for i in range(len(Strip_Pitch)):
         xpm = wid // 2 - STRound
         xm = [xpm, -xpm, -xpm, xpm]
         ym = [ypm, ypm, -ypm, -ypm]
-        erdraw(cd, xm, ym, 1000, 1000, M2, STRound)
+        erdraw(cd, xm, ym, 500, 1500, M2, STRound)
         #   Connect FP to mesh 4 micron wide at y=0
-        cd.addBox(-wid // 2, -2000, wid, 4000, M2)
+        cd.addBox(-wid // 2, -1500, wid, 3000, M2)
     #
     #   Cell boundry for fill
     e = cd.addBox(-SPitch // 2, -Slength // 2, SPitch, Slength, OTL)
@@ -1127,6 +1084,7 @@ for i in range(len(Strip_Pitch)):
         # Add border
         bref = findCell_CK(Border3mm[i])
         e = astr.addCellref(bref, point(0, 0))
+
         # Add DJ implants
         if "DJ" in Strip_name[i]:
             astr.addCellref(cstr, point(0, 0))
@@ -1161,6 +1119,7 @@ for i in range(len(Strip_Pitch)):
         # Add border
         bref = findCell_CK(Border3mm[i])
         e = astr.addCellref(bref, point(0, 0))
+
         # Add DJ implants
         if "DJ" in Strip_name[i]:
             astr.addCellref(cstr, point(0, 0))
@@ -1607,11 +1566,15 @@ cell_3mm_50 = NewCell("Assy_str_3mm_50")
 cell_3mm_100 = NewCell("Assy_str_3mm_100")
 cell_3mm_AC = NewCell(cells_3mm[2])
 cell3mm_list = [cell_3mm_50, cell_3mm_100, cell_3mm_AC]
+ZA_exclude = [228, 57, 57]
+tlyr = [WLayer1, WLayer2, WLayer3]
+
 for i in range(2):
     cname = cells_3mm[i]
     c_3mm = cell3mm_list[i]
     for j in range(4):
         ccell = findCell_CK(cellnames_3mm[4 * i + j])
+
         # print(cellnames_3mm[4 * i + j], i, j)
         px = offx_3mm[j]
         py = offy_3mm[j]
@@ -1619,23 +1582,11 @@ for i in range(2):
     c_3mm.addCellref(Outline, point(0,0))
     # exclude edge from NWD
     c_3mm.addCellref(exedge_PWD, point(0, 0))
-
+    # exclude internal NWD
+    c_3mm.addCellref(PWD_X, point(0, 0))
     #   add ZA Fill
     if (ZA_Fill):
-        addZAFill(c_3mm, ZA, WLayer2, ZA_FillCell)
-        if (Fix_ZA):
-        #   remove extra fill in LL corners
-            dr.point(366634, 372454)
-            dr.cSelect()
-            dr.point(-2651794, 353055)
-            dr.cSelect()
-            dr.point(382153, -2614937)
-            dr.point(382153, -2620757)
-            dr.cSelect()
-            dr.point(358875, -2644035)
-            dr.cSelect()
-            dr.deleteSelect()
-            dr.deselectAll()
+        addMZFill(c_3mm, ZA_exclude, tlyr, ZA_FillCell, 2000, 0)
         print(cname + " ZA Fill")
     CellList.append(cname)
     CellList.append(cname)
@@ -1653,21 +1604,10 @@ for j in range(4):
 c_3mm.addCellref(Outline, point(0,0))
 # exclude edge from NWD
 c_3mm.addCellref(exedge_PWD, point(0, 0))
-if (ZA_Fill):
-    addZAFill(c_3mm, ZA, WLayer2, ZA_FillCell)
+c_3mm.addCellref(PWD_X, point(0, 0))
     #   remove extra fill in LL corners
-    if (Fix_ZA):
-        dr.point(366634, 372454)
-        dr.cSelect()
-        dr.point(-2651794, 353055)
-        dr.cSelect()
-        dr.point(382153, -2614937)
-        dr.point(382153, -2620757)
-        dr.cSelect()
-        dr.point(358875, -2644035)
-        dr.cSelect()
-        dr.deleteSelect()
-        dr.deselectAll()
+if (ZA_Fill):
+    addMZFill(c_3mm, ZA_exclude, tlyr, ZA_FillCell, 2000, 0)
     print(cname + " ZA Fill")
 CellList.append(cname)
 
@@ -1731,8 +1671,8 @@ print(CellList)
 now = datetime.now()
 filetime = now.strftime("%Y_%m_%d_%H_%M")
 filefill = f"{int(CellFill)}{int(InvertOF)}{int(ZA_Fill)}"
-gdsversion = "V26_"
-gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion + filetime + ".gds"
+gdsversion = "V26_r1"
+gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion +  ".gds"
 print(gdsfile)
 
 l.drawing.saveFile(gdsfile)
