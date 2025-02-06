@@ -21,7 +21,8 @@ def editGDS(gdsv):
     # file containing cells to update
     modgdsfile1 = str(home_directory) + "/Dropbox/Programming/TWR_layout/V1_Via_4x4.gds"
     modgdsfile2 = str(home_directory) + "/Dropbox/Programming/TWR_layout/V2_Via_4x4.gds"
-    modlist = [modgdsfile1, modgdsfile2]
+    modgdsfile3 = str(home_directory) + "/Dropbox/Programming/TWR_layout/Contact_4x4.gds"
+    modlist = [modgdsfile1, modgdsfile2, modgdsfile3]
 
     # time stamped updated file
     # Input Reticule

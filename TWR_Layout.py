@@ -656,7 +656,7 @@ PIWid_2 = 1500
 
 #	contact half-width
 cwidth = 6000  # width of contact
-CA_Width = 40  # half width of Tower contact
+CA_Width = 45  # half width of Tower contact
 CA_Space = 200  # Spacing for CA contact array
 
 V1_Width = 50  # V1 half width
