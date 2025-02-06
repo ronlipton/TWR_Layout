@@ -572,9 +572,9 @@ dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Tes
 # List of test structure cells
 SLAC_TS_List = ["AC_MidGap_Block", "AC_NoGap_Block", "AC_WideGapBlock", "DJ_Block", "RT_T3x3_PSTOP_Block"]
 
-CellFill = True  # turn on/off the layout editor fill algorithm
-InvertOF = True # turn on inversion of OF to NWD
-ZA_Fill = True # Turn on generation of ZA fill
+CellFill = False  # turn on/off the layout editor fill algorithm
+InvertOF = False # turn on inversion of OF to NWD
+ZA_Fill = False # Turn on generation of ZA fill
 # Fix_ZA = False  # not needed
 
 OTL = 201  # outline for drawing
@@ -758,8 +758,11 @@ for i in range(len(Via_Cells)):
     ml.addBox(-Via_Widths[i], -Via_Widths[i], 2 * Via_Widths[i], 2 * Via_Widths[i], Via_Layers[i])
     #  4x4 contact Cell
     ml4x4 = NewCell(Via_Cells[i] + "_4x4")
+    #  decide on 2x2 or 3x3 based on rules - 2x2 default for now (2/6/25)
     VS = (Via_Spaces[i] + Via_Widths[i])
     e = ml4x4.addCellrefArray(ml, point(-VS, -VS), point(VS, VS), 2, 2)
+    #VS = (Via_Spaces[i] + 2*Via_Widths[i])
+    #e = ml4x4.addCellrefArray(ml, point(-VS, -VS), point(0, 0), 3, 3)
     if i == 2:
         Via_List.append(ml)
     else:
@@ -1683,7 +1686,7 @@ print(CellList)
 now = datetime.now()
 filetime = now.strftime("%Y_%m_%d_%H_%M")
 filefill = f"{int(CellFill)}{int(InvertOF)}{int(ZA_Fill)}"
-gdsversion = "V26_r2"
+gdsversion = "V26_r3"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion +  ".gds"
 print(gdsfile)
 
