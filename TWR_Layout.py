@@ -1,5 +1,3 @@
-import LayoutScript
-from LayoutScript import *
 
 def BoxDraw(c, xgr, ygr, radius, whigh, wlow, layer):
     #
@@ -182,12 +180,12 @@ def DrawBump(BP, len, layer):
 #	print(vertices)
 
 #  define spacing list 1d mesh with defined limit and  spacing
-def Space_1d(width, spacing):
-    NCY = max(width // spacing, 1)
-    points = [j * spacing for j in range(NCY)]
-    mean = sum(points) / len(points)
-    out_points = [point - mean for point in points]
-    return out_points
+# def Space_1d(width, spacing):
+#     NCY = max(width // spacing, 1)
+#     points = [j * spacing for j in range(NCY)]
+#     mean = sum(points) / len(points)
+#     out_points = [point - mean for point in points]
+#     return out_points
 
 
 def make_2dmesh(cellname, Metal_list, mlayer, via_list):
@@ -303,13 +301,13 @@ def is_outside(x, y, z, a):
         return False  # The box is inside
 
 
-def M1M2M3Fill(Cellname, Layers, Density, SSpace, MWidth, MSpace, FSize):
-    dr.setCell(Cellname)
-    print(" Filling " + Cellname)
-    for i in range(len(Layers)):
-        dr.densityFill(Layers[i], Density[i], SSpace[i], MWidth[i], MSpace[i], FSize[i])
-    dr.deselectAll()
-    return True
+# def M1M2M3Fill(Cellname, Layers, Density, SSpace, MWidth, MSpace, FSize):
+#     dr.setCell(Cellname)
+#     print(" Filling " + Cellname)
+#     for i in range(len(Layers)):
+#         dr.densityFill(Layers[i], Density[i], SSpace[i], MWidth[i], MSpace[i], FSize[i])
+#     dr.deselectAll()
+#     return True
 
 
 def makeMeshContact(Cell_name, DXY, LList, SList, LayerList, CList):
@@ -577,7 +575,7 @@ SLAC_TS_List = ["AC_MidGap_Block", "AC_NoGap_Block", "AC_WideGapBlock", "DJ_Bloc
 CellFill = True  # turn on/off the layout editor fill algorithm
 InvertOF = True # turn on inversion of OF to NWD
 ZA_Fill = True # Turn on generation of ZA fill
-Fix_ZA = False  # not needed
+# Fix_ZA = False  # not needed
 
 OTL = 201  # outline for drawing
 OD = 1  # Defines active window
@@ -662,10 +660,10 @@ CA_Width = 40  # half width of Tower contact
 CA_Space = 200  # Spacing for CA contact array
 
 V1_Width = 50  # V1 half width
-V1_Space = 100
+V1_Space = 150
 
 V2_Width = 50  # V2 half width
-V2_Space = 200
+V2_Space = 150
 
 V3_Width = 50  # V3 half width
 V3_Space = 300
@@ -760,8 +758,8 @@ for i in range(len(Via_Cells)):
     ml.addBox(-Via_Widths[i], -Via_Widths[i], 2 * Via_Widths[i], 2 * Via_Widths[i], Via_Layers[i])
     #  4x4 contact Cell
     ml4x4 = NewCell(Via_Cells[i] + "_4x4")
-    VS = (Via_Spaces[i] + 2 * Via_Widths[i])
-    e = ml4x4.addCellrefArray(ml, point(-VS, -VS), point(0, 0), 3, 3)
+    VS = (Via_Spaces[i] + Via_Widths[i])
+    e = ml4x4.addCellrefArray(ml, point(-VS, -VS), point(VS, VS), 2, 2)
     if i == 2:
         Via_List.append(ml)
     else:
@@ -774,7 +772,7 @@ ZGV = NewCell("ZG_Via1")
 e = adddrBox(ZGV,-ZG_side//2, -ZG_side//2, ZG_side, ZG_side, 0, ZG)
 
 BP_M3_Via_80 = NewCell("BP_M3_via80")
-BPM3Width = 73000
+BPM3Width = 70000
 # 10/24/24 modified for 2 um zg m3 overlap rule
 BPM3Length = 3000 # change from 2000 for RTPixel rule
 #  change the overlap to 1000
@@ -795,24 +793,24 @@ e = adddrBox(BP_M3_Via_60, -BPM3Width // 2 - ZGM3_ovr, -BPM3Length // 2 - ZGM3_o
 # 80 micron bond pad
 BP_80 = NewCell("Bond_Pad_80")
 padWidth_80 = 77000
-padLength_80 = 204000
+padLength_80 = 214000
 OXLength_80 = 190000
-OXWidth_80 = 71000
+OXWidth_80 = 70000
 e = adddrBox(BP_80, -OXWidth_80 // 2, -OXLength_80 // 2, OXWidth_80, OXLength_80, 0, ZP)
 e = adddrBox(BP_80, -padWidth_80 // 2, -padLength_80 // 2, padWidth_80, padLength_80, 0, ZA)
-e = BP_80.addCellref(BP_M3_Via_80, point(0, padLength_80 // 2 - 3000))
-e = BP_80.addCellref(BP_M3_Via_80, point(0, -padLength_80 // 2 + 3000))
+e = BP_80.addCellref(BP_M3_Via_80, point(0, padLength_80 // 2 - ZGM3_ovr-BPM3Length//2))
+e = BP_80.addCellref(BP_M3_Via_80, point(0, -padLength_80 // 2 + ZGM3_ovr + BPM3Length//2))
 
 #  60 micron bond pad
 BP_60 = NewCell("Bond_Pad_60")
 padWidth_60 = 57000
-padLength_60 = 205000
+padLength_60 = 204000
 OXLength_60 = 190000
 OXWidth_60 = 51000
 e = adddrBox(BP_60, -OXWidth_60 // 2, -OXLength_60 // 2, OXWidth_60, OXLength_60, 0, ZP)
 e = adddrBox(BP_60, -padWidth_60 // 2, -padLength_60 // 2, padWidth_60, padLength_60, 0, ZA)
-e = BP_60.addCellref(BP_M3_Via_60, point(0, padLength_60 // 2 - 2500))
-e = BP_60.addCellref(BP_M3_Via_60, point(0, -padLength_60 // 2 + 2500))
+e = BP_60.addCellref(BP_M3_Via_60, point(0, padLength_60 // 2 - ZGM3_ovr- BPM3Length//2))
+e = BP_60.addCellref(BP_M3_Via_60, point(0, -padLength_60 // 2 + ZGM3_ovr + BPM3Length//2))
 
 #   Bump Pad_Cell
 BCell = NewCell("BumpPad")
@@ -867,7 +865,7 @@ CA_Contact = findCell_CK("Contact_4x4")
 #
 #   Active dimensions for 3x3 strip arrays
 #
-Str_Length = 2000000
+Str_Length = 2006000
 Str_Length_2 = Str_Length // 2
 empty_cell = NewCell("empty")
 offset_3mm = 1500000
@@ -926,7 +924,7 @@ STInset = 5000  # Strip implant inset from edge
 ST_CA_Pitch = 10000  # Strip contact pitch
 ST_M1_Pitch = 2000  # strip M1 contact strip Pitch
 SXY_Active = 5000000
-STXY_Active = 2000000
+STXY_Active = Str_Length
 #   X,Y line width and space for metal layers 1, 2, 3
 # LList = [[750, 750], [4000, 4000], [4000, 4000]]
 # SList = [[1250, 1250], [6000, 6000], [6000, 6000]]
@@ -1014,6 +1012,7 @@ for i in range(len(Strip_Pitch)):
     cd = NewCell(DCStripn)
     lng = Slength - sgap
     wid = siwidth
+#    print(" length=" + str(lng))
     # check for OD in AC
     e = adddrBoxOD(cd, -wid // 2, -lng // 2, wid, lng, STRound, Imp_Lyr[i], OD, OD_inset)
     if Imp_Lyr[i] == NPL:
@@ -1027,12 +1026,16 @@ for i in range(len(Strip_Pitch)):
         ym = [ypm, ypm, -ypm, -ypm]
         erdraw(cd, xm, ym, 500, 1500, M2, STRound)
         #   Connect FP to mesh 4 micron wide at y=0
-        cd.addBox(-wid // 2, -1500, wid, 3000, M2)
+        # add offset for new mesh
+        cd.addBox(-wid // 2, -400, wid, 2400, M2)
     #
     #   Cell boundry for fill
     e = cd.addBox(-SPitch // 2, -Slength // 2, SPitch, Slength, OTL)
     #   mesh subroutine
-    lxy = [siwidth, lng]
+    if SPitch == 12500:
+        lxy = [siwidth, lng]
+    else:
+        lxy = [siwidth-4000, lng-6000]
     # cd.addCellref(ce, point(0, 0))
     MCell_name = Strip_name[i] + "_Electrode"
     CList = [ConCell[i], V1Cell[i], V2Cell[i]]
@@ -1065,8 +1068,9 @@ for i in range(len(Strip_Pitch)):
         e = addMxFill(cd, mlayer, TLayer, FCell_25, csize, osize)
 
     if SPitch == 100000:
-        cd.addCellref(BP_80, point(0, Slength // 2 - BPinset))
-        cd.addCellref(BP_80, point(0, -Slength // 2 + BPinset))
+        BPinset = 249500
+        cd.addCellref(BP_80, point(0, Slength // 2 - BPinset + 1500))
+        cd.addCellref(BP_80, point(0, -Slength // 2 + BPinset -1500 ))
 
         #        bstr = NewCell(Strip_name[i] + "_Arr")
         Strip_Arrays.append(Strip_name[i] + "_Arr3mm")
@@ -1095,16 +1099,17 @@ for i in range(len(Strip_Pitch)):
 
     if SPitch == 50000:
         #   make two copies of strip for staggered pads
+        BPinset = 249500 - 3500
         dr.setCell(DCStripn)
         dr.selectAll()
         dr.point(-25000, 0)
         dr.move()
         dr.point(50000, 0)
         dr.copy()
-        cd.addCellref(BP_60, point(-25000, Slength // 2 - BPinset))
-        cd.addCellref(BP_60, point(-25000, -Slength // 2 + BPinset))
-        cd.addCellref(BP_60, point(25000, Slength // 2 - Row2inset))
-        cd.addCellref(BP_60, point(25000, -Slength // 2 + Row2inset))
+        cd.addCellref(BP_60, point(-25000, -490000))
+        cd.addCellref(BP_60, point(25000, -750000))
+        cd.addCellref(BP_60, point(-25000, 750000))
+        cd.addCellref(BP_60, point(25000, 490000))
         #   build array
         bstr = NewCell(Strip_name[i] + "_Arr")
         Strip_Arrays.append(Strip_name[i] + "_Arr")
@@ -1359,14 +1364,21 @@ for i in range(len(RTname)):
     # add fill
     #
     dr.setCell(RTname[i])
+    RT_ptr = dr.currentCell
     # dr.activeLayer = PGN  # was ND
-    rtpad.selectLayer(JTE)
-    l.booleanTool.setA()
-    rtpad.selectLayer(M2)
-    l.booleanTool.setB()
-    l.booleanTool.aMinusB()
-    l.drawing.currentCell.moveToLayerSelect(WLayer1)
-    dr.fillSelectedShapes("Fill_25pct", 0)
+    if CellFill:
+        print(" Cell " + RTname[i])
+        csize = 4000
+        osize = 0
+        e = addMxFill(RT_ptr, mlayer, TLayer, FCell_25, csize, osize)
+    # rtpad.selectLayer(JTE)
+    # l.booleanTool.setA()
+    # rtpad.selectLayer(M2)
+    # l.booleanTool.setB()
+    # l.booleanTool.aMinusB()
+    # l.drawing.currentCell.moveToLayerSelect(WLayer1)
+    # dr.fillSelectedShapes("Fill_25pct", 0)
+
     #
     # Array cell
     #
@@ -1671,7 +1683,7 @@ print(CellList)
 now = datetime.now()
 filetime = now.strftime("%Y_%m_%d_%H_%M")
 filefill = f"{int(CellFill)}{int(InvertOF)}{int(ZA_Fill)}"
-gdsversion = "V26_r1"
+gdsversion = "V26_r2"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion +  ".gds"
 print(gdsfile)
 

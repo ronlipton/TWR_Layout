@@ -21,7 +21,7 @@ LogStat = False
 #   Import Layout
 #
 start_time = time.time()
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/TWR_24_r4.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/TWR_25_r1.gds")
 
 # Layer definitions
 OTL = 201  # outline for drawing
@@ -66,14 +66,14 @@ DRCMList = [M1, M2, M3]
 nlayer = 2
 Filen = "/Users/lipton/Dropbox/Programming/TWR_layout/DRC/DenDRC_L" + str(DRCMList[nlayer]) + ".txt"
 DRCfile = open(Filen, "w")
-DRC_Cell_Names = ["DJ_100", "DJ_PN", "JTE", "DJ_50", "ACC-3mm", "ACP_3mm", "St100AC_40", "St100AC_60", "St100AC_80", "St100AC_20"]
+#DRC_Cell_Names = ["DJ_100", "DJ_PN", "JTE", "DJ_50", "ACC-3mm", "ACP_3mm", "St100AC_40", "St100AC_60", "St100AC_80", "St100AC_20"]
 # DRC_Cell_Names = ['Assy_AC_50', 'Assy_AC_100', 'AssyDJ_50', 'AssyDJ_100', 'AssyPX_50_NG', 'AssyPX_100_NG',
 #                  'Assy_Str125_Arr', 'AssyDJ_NB_100', 'Assy_str_3mm_50', 'Assy_str_3mm_100', 'Assy_ACStr_Elec', 'Assy_RTPixel', 'Assy_RT_100']
-# DRC_Cell_Names = ['Assy_AC_50']
+DRC_Cell_Names = ['Reticule']
 #Border_Cell_Names = ["6mm_100um_pitch_bumps", "6mm_100um_pitch_bumps_DJ_ASIL", "6mm_50um_pitch_bumps", "6mm_with_pads",  "3mm_with_pads"]
 Border_Cell_Names = []
 # Checks = ["density", "inset" , "grid", "angle", "dimension"]
-Checks = ["inset"]
+Checks = ["density"]
 #
 #  Metal density parameters [M1,M2, M3] window sizes MDensity
 #

@@ -341,12 +341,13 @@ def make_2dmesh(cellname, Metal_list, mlayer, via_list):
 def Place_Pad(cd, Name, SXY_Active, SPitch, Slength):
     astr = NewCell(Name + "_Arr")
     #	Strip_Arrays.append(Strip_name[i] + "_Arr")
-    NstX = SXY_Active // SPitch
-    NstY = SXY_Active // Slength
-    xoff = -((NstX - 1) * SPitch) // 2  # bottom left
-    yoff = -((NstY - 1) * Slength) // 2  # bottom left
-    pref = point(xoff, yoff)
-    poff = point(xoff + SPitch, yoff + Slength)
+    # NstX = SXY_Active // SPitch
+    # NstY = SXY_Active // Slength
+    # xoff = -((NstX - 1) * SPitch) // 2  # bottom left
+    # yoff = -((NstY - 1) * Slength) // 2  # bottom left
+    # pref = point(xoff, yoff)
+    # poff = point(xoff + SPitch, yoff + Slength)
+    NstX, NstY, pref, poff = cArray(SPitch, Slength, STXY_Active)
     e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
     return astr
 
