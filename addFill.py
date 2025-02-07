@@ -13,6 +13,7 @@ def addMZFill(Assy, exclude, tlayer, fillCell, csize, osize):
     #   osuize - dimension to compress frame
     start_time = time.time()
     dr.setCell(Assy)
+    # merge excluded layers into tlayer[2]
     for ilyr in range(len(exclude)):
         l.booleanTool.boolOnLayer(tlayer[2], exclude[ilyr], tlayer[2], "A+B", 0, 0, 2)
     dr.deselectAll()
@@ -31,7 +32,7 @@ def addMZFill(Assy, exclude, tlayer, fillCell, csize, osize):
     else:
         Assy.deleteLayer(tlayer[1])
         Assy.deleteLayer(tlayer[2])
-    print("Mx FIll time elapsed: {:.2f}s".format(time.time() - start_time))
+    print("MZ FIll time elapsed: {:.2f}s".format(time.time() - start_time))
     return True
 
 
@@ -52,20 +53,24 @@ def main():
     home_directory = Path.home()
     gdsversion = "V26_r1"
     ingdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_000" + gdsversion + ".gds"
-    outgdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/Test_" + gdsversion + ".gds"
+    outgdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/Fill_" + gdsversion + ".gds"
     # Input Reticule
     dr.importFile(ingdsfile)
     #	l.drawing.saveFile("/Users/lipton/Test" +  ".gds")
-    print(dr.existCellname("Za_Fill"))
+    # print(dr.existCellname("Za_Fill"))
     CCell = dr.findCell("Fill_25pct")
     ZAfill = dr.findCell("Za_Fill")
     fCell = [CCell, ZAfill]
     # print(fCell)
+    # layers for both Mx and ZA
     mlayer = [[43, 47, 49],[57, 57, 57]]
     tlayer = [[201, 202, 203],[201, 202, 203]]
+    # dimension to grow target layer (close up holes)
     csize = [2000, 2000]
+    # dimension to modify the resulting inverted layer
     osize = [0, 0]
 
+    # Target single cell, ZA only
     Str_100_Cell = dr.findCell("Assy_str_3mm_100")
     ZA_exclude = [228, 57, 57]
     tlyr = [201, 202, 203]
@@ -79,7 +84,7 @@ def main():
     #         Assy = dr.currentCell
     #         addMZFill(Assy, mlayer[i], tlayer[i], fCell[i], csize[i], osize[i])
 
-#	print(outgdsfile)
+	print(outgdsfile)
     l.drawing.saveFile(outgdsfile)
     print("Writing Version " + gdsversion +  " Python script completed")
 

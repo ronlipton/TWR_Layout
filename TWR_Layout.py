@@ -566,15 +566,15 @@ home_directory = Path.home()
 #
 #   Import SLAC portions
 #
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v17.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v17_r1.gds")
 # Test structures
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v4nool100.GDS")
 # List of test structure cells
 SLAC_TS_List = ["AC_MidGap_Block", "AC_NoGap_Block", "AC_WideGapBlock", "DJ_Block", "RT_T3x3_PSTOP_Block"]
 
-CellFill = False  # turn on/off the layout editor fill algorithm
-InvertOF = False # turn on inversion of OF to NWD
-ZA_Fill = False # Turn on generation of ZA fill
+CellFill = True  # turn on/off the layout editor fill algorithm
+InvertOF = True # turn on inversion of OF to NWD
+ZA_Fill = True # Turn on generation of ZA fill
 # Fix_ZA = False  # not needed
 
 OTL = 201  # outline for drawing
@@ -1642,6 +1642,12 @@ for i in range(len(RTCname)):
 #
 for i in range(len(SLAC_TS_List)):
     cnam = SLAC_TS_List[i]
+    dr.setCell(CellList[i])
+    TSCell = dr.currentCell
+    ##  Fill logiced out !!!
+    if (ZA_Fill and False):
+        addZAFill(TSCell, ZA, WLayer2, ZA_FillCell)
+        print(cnam + " ZA Fill")
     CellList.append(cnam)
 
 #   invert OF/PWD for NWD layer
