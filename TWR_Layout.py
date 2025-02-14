@@ -568,9 +568,10 @@ home_directory = Path.home()
 #
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v17_r1.gds")
 # Test structures
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v4nool100.GDS")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v23.GDS")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Compile_term_options_v1.gds")
 # List of test structure cells
-SLAC_TS_List = ["AC_MidGap_Block", "AC_NoGap_Block", "AC_WideGapBlock", "DJ_Block", "RT_T3x3_PSTOP_Block"]
+SLAC_TS_List = ["Block_AC", "Block_DJ", "Block_RT", "Block_CEP", "gr_test_block1", "gr_test_block2"]
 
 CellFill = True  # turn on/off the layout editor fill algorithm
 InvertOF = True # turn on inversion of OF to NWD
@@ -758,11 +759,11 @@ for i in range(len(Via_Cells)):
     ml.addBox(-Via_Widths[i], -Via_Widths[i], 2 * Via_Widths[i], 2 * Via_Widths[i], Via_Layers[i])
     #  4x4 contact Cell
     ml4x4 = NewCell(Via_Cells[i] + "_4x4")
-    #  decide on 2x2 or 3x3 based on rules - 2x2 default for now (2/6/25)
-    VS = (Via_Spaces[i] + Via_Widths[i])
-    e = ml4x4.addCellrefArray(ml, point(-VS, -VS), point(VS, VS), 2, 2)
-    #VS = (Via_Spaces[i] + 2*Via_Widths[i])
-    #e = ml4x4.addCellrefArray(ml, point(-VS, -VS), point(0, 0), 3, 3)
+    #  decide on 2x2 or 3x3 based on rules - 2x2 default for now (2/6/25)-> 3x3
+    #VS = (Via_Spaces[i] + Via_Widths[i])
+    #e = ml4x4.addCellrefArray(ml, point(-VS, -VS), point(VS, VS), 2, 2)
+    VS = (Via_Spaces[i] + 2*Via_Widths[i])
+    e = ml4x4.addCellrefArray(ml, point(-VS, -VS), point(0, 0), 3, 3)
     if i == 2:
         Via_List.append(ml)
     else:
@@ -955,7 +956,7 @@ e = adddrBoxOD(cpad, -(activeLength + DJPinset) // 2, -(activeLength + DJPinset)
 name = "DJ_N_3mm"
 dpad = NewCell(name)
 e = adddrBoxOD(dpad, -(activeLength + DJNinset) // 2, -(activeLength + DJNinset) // 2, \
-               activeLength + DJNinset, activeLength + DJNinset, DJRound + 4000, DJN, OD, OD_inset)
+               activeLength + DJNinset, activeLength + DJNinset, DJRound, DJN, OD, OD_inset)
 
 name = "DJ_PN_3mm"
 cstr = NewCell(name)
@@ -1537,8 +1538,8 @@ for i in range(len(NG_Type)):
     makeAssy(Assy_NGPX, clist)
     #   add ZA Fill
     if (ZA_Fill):
-        addZAFill(Assy_NGPX, ZA, WLayer2, ZA_FillCell)
         print(cname + " ZA Fill")
+        addZAFill(Assy_NGPX, ZA, WLayer2, ZA_FillCell)
     #
     CellList.append(cname)
 
@@ -1556,6 +1557,7 @@ for i in range(1):
     clist = (Strip_Arrays[i], cotl, border, "Exclude_edge_PWD")
     makeAssy(STX_Ass, clist)
     if (ZA_Fill):
+        print(cname + " ZA Fill")
         addZAFill(STX_Ass, ZA, WLayer2, ZA_FillCell)
 #        print(cname + " ZA Fill")
     CellList.append(cname)
@@ -1604,7 +1606,6 @@ for i in range(2):
         addMZFill(c_3mm, ZA_exclude, tlyr, ZA_FillCell, 2000, 0)
         print(cname + " ZA Fill")
     CellList.append(cname)
-    CellList.append(cname)
 #
 #   Add AC pitch variants
 indx = 2
@@ -1624,6 +1625,7 @@ c_3mm.addCellref(PWD_X, point(0, 0))
 if (ZA_Fill):
     addMZFill(c_3mm, ZA_exclude, tlyr, ZA_FillCell, 2000, 0)
     print(cname + " ZA Fill")
+CellList.append(cname)
 CellList.append(cname)
 
 RTF_list = ["empty", "empty"]
@@ -1692,7 +1694,7 @@ print(CellList)
 now = datetime.now()
 filetime = now.strftime("%Y_%m_%d_%H_%M")
 filefill = f"{int(CellFill)}{int(InvertOF)}{int(ZA_Fill)}"
-gdsversion = "V26_r3"
+gdsversion = "V27_r0"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion +  ".gds"
 print(gdsfile)
 
