@@ -72,7 +72,7 @@ def main():
 
     # Target single cell, ZA only
     Str_100_Cell = dr.findCell("Assy_str_3mm_100")
-    ZA_exclude = [228, 57, 57]
+    ZA_exclude = [228, 204, 57]
     tlyr = [201, 202, 203]
     addMZFill(Str_100_Cell, ZA_exclude, tlyr, ZAfill, csize[0], osize[0])
 
