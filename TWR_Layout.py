@@ -559,26 +559,34 @@ SLAC_TS_List = ["Block_AC", "Block_DJ", "Block_RT", "Block_CEP", "gr_test_block1
 
 
 # Cells for metal fill(CellFill)
-MFill_name = ["Str50_AC", "St100AC_20", "St100AC_40", "St100AC_60", "St100AC_80","RTPixel","RT_100"]
+MFill_name = ["Str50_AC", "Str100_AC", "Str100AC_20", "Str100AC_40", "Str100AC_60", "Str100AC_80","RTPixel","RT_100", "DJ_100Base",
+              "ACPad_50", "ACPad_100",
+              "Str50_DJ", "Str50_DJNPS", "Str50_AC", "Str50_NOGN",
+              "Str100_DJ", "Str100_DJNPS", "Str100_AC", "Str100_NOGN"]
+#MFill_name = [ "St100AC_20"]
 #MFill_name = []
 
 # Cells for ZA fill(ZA_Fill)
 ZAFill_name = ["Assy_AC_50","Assy_AC_100","AssyDJ_50","AssyDJ_100","AssyPX_50_NG","AssyPX_100_NG","Assy_Str125_Arr",
 "AssyDJ_NB_100","Assy_str_3mm_50","Assy_str_3mm_100","Assy_ACStr_Elec","Assy_RTPixel","Assy_RT_100","AssyDJ_100_NoPS"]
-# ZAFill_name = ["Assy_Str125_Arr"]
+#ZAFill_name = []
 
 # Cells for NWD generation (InvertOF)
 NWDFill_name = ["Assy_AC_50","Assy_AC_100","AssyDJ_50","AssyDJ_100","AssyPX_50_NG","AssyPX_100_NG","Assy_Str125_Arr",
-"AssyDJ_NB_100","Assy_str_3mm_50","Assy_str_3mm_100","Assy_ACStr_Elec","Assy_ACStr_Elec","Assy_RTPixel","Assy_RT_100","AssyDJ_100_NoPS"]
+"AssyDJ_NB_100","Assy_RTPixel","Assy_RT_100","AssyDJ_100_NoPS"]
 # NWDFill_name = ["Assy_Str125_Arr"]
 #NWDFill_name = []
+subNWD_list = ["Str100_AC_Arr3mm", "Str100_DJNPS_Arr3mm", "Str100_DJ_Arr3mm", "Str100_NOGN_Arr3mm",
+"Str50_AC_Arr3mm", "Str50_DJNPS_Arr3mm", "Str50_DJ_Arr3mm", "Str50_NOGN_Arr3mm",
+"Str100AC_20_Arr3mm", "Str100AC_40_Arr3mm", "Str100AC_60_Arr3mm", "Str100AC_80_Arr3mm"]
+#subNWD_list = []
 
 CellFill = True if len(MFill_name) >= 1 else False
 ZA_Fill = True if len(ZAFill_name) >= 1 else False
-InvertOF = True if len(NWDFill_name) >= 1 else False
-nfill = len(MFill_name) + len(ZAFill_name) + len(NWDFill_name)
+InvertOF = True if len(NWDFill_name) + len(subNWD_list) >= 1 else False
+nfill = len(MFill_name) + len(ZAFill_name) + len(NWDFill_name) + len(subNWD_list)
 
-OTL = 201  # outline for drawing
+
 OD = 1  # Defines active window
 JTE = 116  # Junction termination extension IMPLANT (NP-JTE)
 PGN = 117  # boron gain layer IMPLANT (NC)
@@ -614,6 +622,8 @@ WLayer2 = 202
 WLayer3 = 203
 WLayer4 = 204
 
+OTL = WLayer1  # outline for drawing
+
 Temp_Layers = [WLayer1, WLayer2, WLayer3, WLayer4]
 
 # inset of active
@@ -638,7 +648,7 @@ OTL_names = ["OTL_50", "OTL_100"]
 PCell_Outline = []
 for i in range(len(OTL_names)):
     e = NewCell(OTL_names[i])
-    e.addBox(-Pitch[i] // 2, -Pitch[i] // 2, Pitch[i], Pitch[i], OTL)
+    e.addBox(-Pitch[i] // 2, -Pitch[i] // 2, Pitch[i], Pitch[i], WLayer1)
     PCell_Outline.append(e)
 
 # Active dimension of pixel arays
@@ -711,6 +721,17 @@ FCell_25.addBox(-500, -500, 1000, 1000, M2)
 FCell_25.addBox(-500, -500, 1000, 1000, M3)
 FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
 
+# M12 25% fill cell
+M12FCell_25 = NewCell("M12Fill_25pct")
+M12FCell_25.addBox(-500, -500, 1000, 1000, M1)
+M12FCell_25.addBox(-500, -500, 1000, 1000, M2)
+M12FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
+
+# M3 25% fill cell
+M3FCell_25 = NewCell("M3Fill_25pct")
+M3FCell_25.addBox(-500, -500, 1000, 1000, M3)
+M3FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
+
 # Cell for ZA fill
 ZA_FillCell = NewCell("Za_Fill")
 ZA_FillCell.addBox(-3000, -3000, 6000, 6000, ZA)
@@ -738,7 +759,8 @@ ml = NewCell("Contact")
 ml.addBox(-CA_Width, -CA_Width, 2 * CA_Width, 2 * CA_Width, CA)
 #  4x4 contact Cell
 CA4x4 = NewCell("Contact_4x4")
-e = CA4x4.addCellrefArray(ml, point(-CA_Space // 2, -CA_Space // 2), point(CA_Space // 2, CA_Space // 2), 2, 2)
+#e = CA4x4.addCellrefArray(ml, point(-CA_Space // 2, -CA_Space // 2), point(CA_Space // 2, CA_Space // 2), 2, 2)
+e = CA4x4.addCellref(ml, point(0, 0))
 e = CA4x4.addCellref(M1Pad, point(0, 0))
 #  Add ohmic n contact region for CA cell
 NDCAWid_2 = 200
@@ -894,8 +916,8 @@ Strip_Length = [50000, Str_Length, Str_Length, Str_Length, Str_Length,
 
 Strip_name = ["Str125", "Str50_DJ", "Str50_DJNPS", "Str50_AC", "Str50_NOGN",
               "Str100_DJ", "Str100_DJNPS", "Str100_AC", "Str100_NOGN",
-              "St100AC_20", "St100AC_40", "St100AC_60", "St100AC_80"]
-Strip_Fill = [False, False, False, True, False,
+              "Str100AC_20", "Str100AC_40", "Str100AC_60", "Str100AC_80"]
+Strip_Fill = [False, True, True, True, True,
               False, False, False, False, # was all false
               True, True, True, True]
 
@@ -935,7 +957,8 @@ Strip_M1_Lines = []
 Strip_M2 = []
 
 STInset = 5000  # Strip implant inset from edge
-ST_CA_Pitch = 10000  # Strip contact pitch
+# ST_CA_Pitch = 10000  # Strip contact pitch
+ST_CA_Pitch = 12000  # Strip contact pitch
 ST_M1_Pitch = 2000  # strip M1 contact strip Pitch
 SXY_Active = 5000000
 STXY_Active = Str_Length
@@ -1073,13 +1096,15 @@ for i in range(len(Strip_Pitch)):
     BPinset = 249500
     Row2inset = BPinset + 260000
     # Add fill
-    csize = 4000
+    csize = 2000
     osize = -2000
     if CellFill and DCStripn in MFill_name:
     #    e = M1M2M3Fill(DCStripn, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
         print(" Cell " + DCStripn)
-    #    e = addMxFill(cd, M1, WLayer2, FCell_25)
-        e = addMxFill(cd, mlayer, TLayer, FCell_25, csize, osize)
+        e = addMxFill(cd, [M1, M2], TLayer, M12FCell_25, csize, osize)
+        e = addMxFill(cd, [M3], TLayer, M3FCell_25, csize, osize)
+
+
 
     if SPitch == 100000:
         BPinset = 249500
@@ -1190,6 +1215,8 @@ DJAName = ["DJA_50", "DJA_100"]
 DJMRad = 22000  # Radius of m1 layer
 DJMSur = 5000  # 2 x metal surround of implant
 
+# metal list [pitch 1, pitch 2]
+# metal list - [[array xy width, line width, line space, number of lines]  ]
 Metal_list = [[[37000, 1000, 2000, 13], [37000, 1000, 2000, 13], [37000, 1000, 2000, 13]],
               [[85000, 1000, 2000, 29], [85000, 1000, 2000, 29], [85000, 1000, 2000, 29]]]
 Via_list = [Via_List[0], Via_List[1], CA4x4]
@@ -1384,7 +1411,7 @@ for i in range(len(RTname)):
     # dr.activeLayer = PGN  # was ND
     if CellFill and RTname[i] in MFill_name:
         print(" Cell " + RTname[i])
-        csize = 4000
+        csize = 1000
         osize = 0
         e = addMxFill(RT_ptr, mlayer, TLayer, FCell_25, csize, osize)
 
@@ -1433,9 +1460,15 @@ for i in range(len(name)):
     e = cd.addBox(x, y, lx, ly, OTL)
 
     # add fill
-    FCname = name[i] + "_Fill"
-    Fill = makeACFill(FCname, NFill[i], Pad_List, Pad_Widths, BSide, ACPitch[i])
-    e = cd.addCellref(Fill, point(0, 0))
+#    FCname = name[i] + "_Fill"
+#    Fill = makeACFill(FCname, NFill[i], Pad_List, Pad_Widths, BSide, ACPitch[i])
+#    e = cd.addCellref(Fill, point(0, 0))
+#   replace with standard MX fill
+    if CellFill and name[i] in MFill_name:
+        print(" Cell " + name[i])
+        csize = 2000
+        osize = -1000
+        e = addMxFill(cd, mlayer, TLayer, FCell_25, csize, osize)
 
     apad = NewCell(aname[i])
     xoff = -(((NPXRow[i]) - 1) * ACPitch[i]) // 2
@@ -1680,11 +1713,14 @@ if InvertOF:
             print( " Form NWD for " + CellList[i])
             dr.setCell(CellList[i])
             l.booleanTool.boolOnLayer(PWD, 0, NWD, "A invert")
-
+    for i in range(len(subNWD_list)):
+        print(" Form NWD for " + subNWD_list[i])
+        dr.setCell(subNWD_list[i])
+        l.booleanTool.boolOnLayer(PWD, 0, NWD, "A invert")
 #  Delete temporary working layers
-dr.deleteLayer(PWD)
-for i in range(len(Temp_Layers)):
-    dr.deleteLayer(Temp_Layers[i])
+# dr.deleteLayer(PWD)
+# for i in range(len(Temp_Layers)):
+#     dr.deleteLayer(Temp_Layers[i])
 #
 #   Add SLAC structures
 #
@@ -1731,7 +1767,7 @@ print(CellList)
 now = datetime.now()
 filetime = now.strftime("%Y_%m_%d_%H_%M")
 filefill = f"{int(CellFill)}{int(InvertOF)}{int(ZA_Fill)}{int(nfill)}"
-gdsversion = "V28_r3"
+gdsversion = "V29_r3"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion +  ".gds"
 print(gdsfile)
 
