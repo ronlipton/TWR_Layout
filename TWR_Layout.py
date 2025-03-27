@@ -317,7 +317,6 @@ def makeMeshContact(Cell_name, DXY, LList, SList, LayerList, CList):
             NMod = NMod if NMod % 2 == 0 else NMod - 1
             NXY.append(NMod)
             OffXY.append((P[i] * NXY[i] + L[i]) // 2)
-
         Off = -OffXY[0]
         for i in range(NXY[0] + 1):
             D = P[1] * (NXY[1] // 2) + L[1] // 2
@@ -329,7 +328,7 @@ def makeMeshContact(Cell_name, DXY, LList, SList, LayerList, CList):
             D = P[0] * (NXY[0] // 2) + L[0] // 2
             Cell.addBox(-D, Off, 2 * D, L[1], Layer)
             Off = Off + P[1]
-
+#        print(" Offxy (0,1)" + str(OffXY[0]) + " " + str(OffXY[0]) + "NXY " + str(NXY[0]) + " " + str(NXY[1]))
         V0 = point(-OffXY[0] + L[0] // 2, -OffXY[1] + L[1] // 2)
         V1 = point(-OffXY[0] + L[0] // 2 + P[0], -OffXY[1] + L[0] // 2 + P[1])
         Cell.addCellrefArray(CList[m], V0, V1, NXY[0] + 1, NXY[1] + 1)
@@ -563,7 +562,6 @@ MFill_name = ["Str50_AC", "Str100_AC", "Str100AC_20", "Str100AC_40", "Str100AC_6
               "ACPad_50", "ACPad_100",
               "Str50_DJ", "Str50_DJNPS", "Str50_AC", "Str50_NOGN",
               "Str100_DJ", "Str100_DJNPS", "Str100_AC", "Str100_NOGN"]
-#MFill_name = [ "St100AC_20"]
 #MFill_name = []
 
 # Cells for ZA fill(ZA_Fill)
@@ -590,7 +588,6 @@ nfill = len(MFill_name) + len(ZAFill_name) + len(NWDFill_name) + len(subNWD_list
 OD = 1  # Defines active window
 JTE = 116  # Junction termination extension IMPLANT (NP-JTE)
 PGN = 117  # boron gain layer IMPLANT (NC)
-NC = 117
 ACN = 55  # AC phos layer IMPLANT (NQ)
 NPL = 66  # n+ IMPLANT (NP)
 NP = 66
@@ -606,8 +603,8 @@ ZP = 58  # top passivation openings
 CON = 25  # Contact (CA)
 CA = 25  # contact
 # ACC = 9
-DJP = 18  # Deep junction p IMPLANT (PX)
-DJN = 16  # Deep junction n IMPLANT (DW?)
+PX_BDJ = 202  # Deep junction p IMPLANT (PX)
+DW_PDJ = 16  # Deep junction n IMPLANT (DW?)
 PSB = 21  # p substrate contact IMPLANT (PD??)
 PD = 21  # p contact implant
 # PST = 117  # p stop (NC)
@@ -617,10 +614,10 @@ OF = 228  # p well
 PWD = 228 # proper name
 NWD = 227  # NOT NWD is PW
 
-WLayer1 = 201
-WLayer2 = 202
-WLayer3 = 203
-WLayer4 = 204
+WLayer1 = 250
+WLayer2 = 251
+WLayer3 = 252
+WLayer4 = 253
 
 OTL = WLayer1  # outline for drawing
 
@@ -726,6 +723,16 @@ M12FCell_25 = NewCell("M12Fill_25pct")
 M12FCell_25.addBox(-500, -500, 1000, 1000, M1)
 M12FCell_25.addBox(-500, -500, 1000, 1000, M2)
 M12FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
+
+# M1 25% fill cell
+M1FCell_25 = NewCell("M12Fill_25pct")
+M1FCell_25.addBox(-500, -500, 1000, 1000, M1)
+M1FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
+
+# M2 25% fill cell
+M2FCell_25 = NewCell("M12Fill_25pct")
+M2FCell_25.addBox(-500, -500, 1000, 1000, M2)
+M2FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
 
 # M3 25% fill cell
 M3FCell_25 = NewCell("M3Fill_25pct")
@@ -939,8 +946,8 @@ V2Cell = [VM2M3, VM2M3, VM2M3, VM2M3, VM2M3,
            VM2M3, VM2M3, VM2M3, VM2M3,
            VM2M3, VM2M3, VM2M3, VM2M3]
 
-Imp_Lyr = [NPL, NPL, NPL, 0, NPL, NPL, NPL, 0, NPL,
-           0, 0, 0, 0]
+Imp_Lyr = [NPL, NPL, NPL, WLayer1, NPL, NPL, NPL, WLayer1, NPL,
+           WLayer1, WLayer1, WLayer1, WLayer1]
 
 Border3mm = ["empty", "3mm_with_pads", "3mm_with_pads", "3mm_with_pads", "3mm_with_pads",
              "3mm_with_pads", "3mm_with_pads", "3mm_with_pads", "3mm_with_pads",
@@ -963,11 +970,12 @@ ST_M1_Pitch = 2000  # strip M1 contact strip Pitch
 SXY_Active = 5000000
 STXY_Active = Str_Length
 #   X,Y line width and space for metal layers 1, 2, 3
-# LList = [[750, 750], [4000, 4000], [4000, 4000]]
-# SList = [[1250, 1250], [6000, 6000], [6000, 6000]]
+
 LList = [[750, 750], [750, 750], [4000, 4000]]
 SList = [[1250, 1250], [1250, 1250], [6000, 6000]]
-
+#  change values to reduce fill fraction
+#LList = [[700, 700], [700, 700], [4000, 4000]]
+#SList = [[1300, 1130], [1300, 1300], [6000, 6000]]
 
 STRound = 2000  # edge rounding parameter for strips
 STMSurr = 1000
@@ -984,12 +992,12 @@ name = "DJ_P_3mm"
 activeLength = STXY_Active
 cpad = NewCell(name)
 e = adddrBoxOD(cpad, -(activeLength + DJPinset) // 2, -(activeLength + DJPinset) // 2, \
-               activeLength + DJPinset, activeLength + DJPinset, DJRound, DJP, OD, OD_inset)
+               activeLength + DJPinset, activeLength + DJPinset, DJRound, PX_BDJ, OD, OD_inset)
 
 name = "DJ_N_3mm"
 dpad = NewCell(name)
 e = adddrBoxOD(dpad, -(activeLength + DJNinset) // 2, -(activeLength + DJNinset) // 2, \
-               activeLength + DJNinset, activeLength + DJNinset, DJRound, DJN, OD, OD_inset)
+               activeLength + DJNinset, activeLength + DJNinset, DJRound, DW_PDJ, OD, OD_inset)
 
 name = "DJ_PN_3mm"
 cstr = NewCell(name)
@@ -1072,7 +1080,10 @@ for i in range(len(Strip_Pitch)):
     if SPitch == 12500:
         lxy = [siwidth, lng-2000]
     else:
-        lxy = [siwidth-4000, lng-6000]
+        if "AC" in DCStripn:
+            lxy = [siwidth-4000, lng-6000]
+        else:
+            lxy = [siwidth - 12000, lng - 6000]
     # cd.addCellref(ce, point(0, 0))
     MCell_name = Strip_name[i] + "_Electrode"
     CList = [ConCell[i], V1Cell[i], V2Cell[i]]
@@ -1102,6 +1113,8 @@ for i in range(len(Strip_Pitch)):
     #    e = M1M2M3Fill(DCStripn, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
         print(" Cell " + DCStripn)
         e = addMxFill(cd, [M1, M2], TLayer, M12FCell_25, csize, osize)
+    #    e = addMxFill(cd, [M1], TLayer, M1FCell_25, csize, osize)
+    #    e = addMxFill(cd, [M2], TLayer, M2FCell_25, csize, osize)
         e = addMxFill(cd, [M3], TLayer, M3FCell_25, csize, osize)
 
 
@@ -1305,11 +1318,11 @@ dinset = 1500
 rinset = dinset
 djcorner = activeLength + DJPinset
 e = adddrBoxOD(cpad, -djcorner // 2, -djcorner // 2, \
-               djcorner, djcorner, DJRound + dinset, DJP, OD, OD_inset)
+               djcorner, djcorner, DJRound + dinset, PX_BDJ, OD, OD_inset)
 
 djcorner = activeLength + DJNinset
 e = adddrBoxOD(cpad, -djcorner // 2, -djcorner // 2, \
-               djcorner, djcorner, DJRound + dinset + 3500, DJN, OD, OD_inset)
+               djcorner, djcorner, DJRound + dinset + 3500, DW_PDJ, OD, OD_inset)
 
 ##############################################
 #
@@ -1542,7 +1555,8 @@ for i in range(len(AC_Type)):
     ACPName = "AC_Array_" + AC_Type[i]
     #	print(ACPName)
     # clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", "ACPxl_Fill", Border_List[i]]
-    clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", Border_List[i], "Exclude_edge_PWD"]
+#    clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", Border_List[i], "Exclude_edge_PWD"]
+    clist = ["AC_Layer", ACPName, cotl, "Gain_Layer", Border_List[i], "Exclude_edge_PWD"]
     makeAssy(Assy_AC, clist)
 #   add ZA Fill
     if (ZA_Fill and cname in ZAFill_name):
@@ -1559,7 +1573,8 @@ for i in range(len(DJ_Type)):
     Assy_DJ = NewCell(cname)
     DJPName = "DJA_" + DJ_Type[i]
     # clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", Border_List[i]]
-    clist = [DJPName, cotl, "JTE", "DJ_PN", Border_List[i], "Exclude_edge_PWD"]
+#    clist = [DJPName, cotl, "JTE", "DJ_PN", Border_List[i], "Exclude_edge_PWD"] 3/25/25
+    clist = [DJPName, cotl, "DJ_PN", Border_List[i], "Exclude_edge_PWD"]
     makeAssy(Assy_DJ, clist)
     #   add ZA Fill
     if (ZA_Fill and cname in ZAFill_name):
@@ -1579,7 +1594,8 @@ for i in range(len(NG_Type)):
     Assy_NGPX = NewCell(cname)
     NGName = "DJA_" + DJ_Type[i]
     # clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", Border_List[i]]
-    clist = [NGName, cotl, "JTE", Border_List[i], "Exclude_edge_PWD"] # leave out DJ implants
+    # clist = [NGName, cotl, "JTE", Border_List[i], "Exclude_edge_PWD"] 3/25/25
+    clist = [NGName, cotl, Border_List[i], "Exclude_edge_PWD"]
     makeAssy(Assy_NGPX, clist)
     #   add ZA Fill
     if (ZA_Fill and cname in ZAFill_name):
@@ -1597,7 +1613,8 @@ for i in range(len(NI_Type)):
     cname = "AssyDJ_" + NI_Type[i]
     Assy_NIDJ = NewCell(cname)
     NGName = "DJA_" + NI_Type[i]
-    clist = [NGName, cotl, "JTE",  "DJ_PN", Border_List[1], "Exclude_edge_PWD"]
+    # clist = [NGName, cotl, "JTE",  "DJ_PN", Border_List[1], "Exclude_edge_PWD"]
+    clist = [NGName, cotl, "DJ_PN", Border_List[1], "Exclude_edge_PWD"]
     makeAssy(Assy_NIDJ, clist)
     #     #   add ZA Fill
     if (ZA_Fill and cname in ZAFill_name):
@@ -1718,9 +1735,9 @@ if InvertOF:
         dr.setCell(subNWD_list[i])
         l.booleanTool.boolOnLayer(PWD, 0, NWD, "A invert")
 #  Delete temporary working layers
-# dr.deleteLayer(PWD)
-# for i in range(len(Temp_Layers)):
-#     dr.deleteLayer(Temp_Layers[i])
+dr.deleteLayer(PWD)
+for i in range(len(Temp_Layers)):
+     dr.deleteLayer(Temp_Layers[i])
 #
 #   Add SLAC structures
 #
@@ -1767,7 +1784,7 @@ print(CellList)
 now = datetime.now()
 filetime = now.strftime("%Y_%m_%d_%H_%M")
 filefill = f"{int(CellFill)}{int(InvertOF)}{int(ZA_Fill)}{int(nfill)}"
-gdsversion = "V29_r3"
+gdsversion = "V29_r5"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion +  ".gds"
 print(gdsfile)
 
