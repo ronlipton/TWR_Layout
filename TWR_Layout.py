@@ -550,12 +550,12 @@ home_directory = Path.home()
 #
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v18.gds")
 # Test structures
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v42.GDS")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v47.GDS")
 # Guard ring test structures
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Compile_term_options_v2.gds")
 # List of SLAC cells
-SLAC_TS_List = ["Block_AC", "Block_DJ", "Block_RT", "Block_CEP", "gr_test_block1", "gr_test_block2"]
-
+#SLAC_TS_List = ["Block_AC", "Block_DJ", "Block_RT", "Block_CEP", "gr_test_block1", "gr_test_block2"]
+SLAC_TS_List = ["Block_AC", "Block_CEP", "Block_DJ", "Block_RT", "gr_test_block1", "gr_test_block2"]
 
 # Cells for metal fill(CellFill)
 MFill_name = ["Str50_AC", "Str100_AC", "Str100AC_20", "Str100AC_40", "Str100AC_60", "Str100AC_80","RTPixel","RT_100", "DJ_100Base",
@@ -574,6 +574,7 @@ NWDFill_name = ["Assy_AC_50","Assy_AC_100","AssyDJ_50","AssyDJ_100","AssyPX_50_N
 "AssyDJ_NB_100","Assy_RTPixel","Assy_RT_100","AssyDJ_100_NoPS"]
 # NWDFill_name = ["Assy_Str125_Arr"]
 #NWDFill_name = []
+
 subNWD_list = ["Str100_AC_Arr3mm", "Str100_DJNPS_Arr3mm", "Str100_DJ_Arr3mm", "Str100_NOGN_Arr3mm",
 "Str50_AC_Arr3mm", "Str50_DJNPS_Arr3mm", "Str50_DJ_Arr3mm", "Str50_NOGN_Arr3mm",
 "Str100AC_20_Arr3mm", "Str100AC_40_Arr3mm", "Str100AC_60_Arr3mm", "Str100AC_80_Arr3mm"]
@@ -987,17 +988,21 @@ DJNinset = 15000  # inset of deep N (phos) from active length
 DJPinset = 5000  # inset of deep P (Boron) from active length
 DJRound = 2000  # edge rounding radius
 DJInset = 10000
+# modify length to match pixels
+DLength = 6000
 
 name = "DJ_P_3mm"
 activeLength = STXY_Active
+TLength = activeLength + DJPinset - DLength
 cpad = NewCell(name)
-e = adddrBoxOD(cpad, -(activeLength + DJPinset) // 2, -(activeLength + DJPinset) // 2, \
-               activeLength + DJPinset, activeLength + DJPinset, DJRound, PX_BDJ, OD, OD_inset)
+e = adddrBoxOD(cpad, -(TLength) // 2, -(TLength) // 2, \
+               TLength, TLength, DJRound, PX_BDJ, OD, OD_inset)
 
+TLength = activeLength + DJNinset - DLength
 name = "DJ_N_3mm"
 dpad = NewCell(name)
-e = adddrBoxOD(dpad, -(activeLength + DJNinset) // 2, -(activeLength + DJNinset) // 2, \
-               activeLength + DJNinset, activeLength + DJNinset, DJRound, DW_PDJ, OD, OD_inset)
+e = adddrBoxOD(dpad, -(TLength) // 2, -(TLength) // 2, \
+               TLength, TLength, DJRound, DW_PDJ, OD, OD_inset)
 
 name = "DJ_PN_3mm"
 cstr = NewCell(name)
@@ -1649,7 +1654,7 @@ cname = "AssyDJ_NB_" + DJ_Type[1]
 Assy_DJ_NB = NewCell(cname)
 DJPName = "DJA_" + DJ_Type[1] + "_noBump"
 # clist = [DJPName, cotl, "JTE", "DJ_PN", "DJPxl_Fill", No_Pad_border[i]]
-clist = [DJPName, cotl, "JTE", "DJ_PN", No_Pad_border[1], "Exclude_edge_PWD"]
+clist = [DJPName, cotl, "DJ_PN", No_Pad_border[1], "Exclude_edge_PWD"]
 #
 makeAssy(Assy_DJ_NB, clist)
 if (ZA_Fill and cname in ZAFill_name):
@@ -1784,7 +1789,7 @@ print(CellList)
 now = datetime.now()
 filetime = now.strftime("%Y_%m_%d_%H_%M")
 filefill = f"{int(CellFill)}{int(InvertOF)}{int(ZA_Fill)}{int(nfill)}"
-gdsversion = "V29_r5"
+gdsversion = "V29_r6"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion +  ".gds"
 print(gdsfile)
 

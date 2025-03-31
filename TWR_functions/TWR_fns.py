@@ -316,7 +316,7 @@ def makeMeshContact(Cell_name, DXY, LList, SList, LayerList, CList):
     #
     #	Makse an XY mesh
     #	Cell - mesh cell pointer
-    #	DXY - X and Y widths of the contact (modified if necessary top aling with 0,0)
+    #	DXY - X and Y widths of the contact (modified if necessary to align with 0,0)
     #	L - X and Y width of metal
     #	S - x and Y space
     #	L - Layer
