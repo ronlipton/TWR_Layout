@@ -521,6 +521,61 @@ def addMZFill(Assy, exclude, tlayer, fillCell, csize, osize):
     print("Mx FIll time elapsed: {:.2f}s".format(time.time() - start_time))
     return True
 
+def place_label(tcell, cname, l3mm):
+    #   place cell names on left side and logos on right side
+    # Label coordinates
+    if l3mm:
+        label_x = -800000
+        label_y = -1410000
+        logo_x = 750000
+        logo_y = -1414000
+    else:
+        label_x = -2300000
+        label_y = -2910000
+        logo_x = 2250000
+        logo_y = -2915000
+
+    LabelCell = findCell_CK("Label_" + cname)
+    LogoCell = findCell_CK("Logo_all")
+    tcell.addCellref(LabelCell, point(label_x, label_y))
+    tcell.addCellref(LabelCell, point(label_x, -label_y))
+
+    tcell.addCellref(LogoCell, point(logo_x, logo_y))
+    tcell.addCellref(LogoCell, point(logo_x, -logo_y))
+
+    return
+
+def remove_labels():
+    labels = [
+        "Label_AssyDJ100",
+        "Label_AssyRT_100",
+        "Label_Str50_NOGN_arr3mm",
+        "Label_Str50_AC_arr3mm",
+        "Label_Str100_NOGN_arr3mm",
+        "Label_Str100_DJ_arr3mm",
+        "Label_Str100_DJNPS_arr3mm",
+        "Label_Str100_AC_arr3mm",
+        "Label_Assy_Str125_Arr",
+        "Label_AssyAC100",
+        "Label_St100AC_80_arry3mm",
+        "Label_St100AC_60_arry3mm",
+        "Label_St100AC_40_arry3mm",
+        "Label_St100AC_20_arry3mm",
+        "Label_AssyPX_100_NG",
+        "Label_AssyDJ_NB_100",
+        "Label_AssyDJ_100_NoPS",
+        "Label_AssyDJ50",
+        "Label_AssyRTPixel",
+        "Label_Str50_DJNPS_arr3mm",
+        "Label_Str50_DJ_arr3mm",
+        "Label_AssyPX_50_NG",
+        "Label_AssyAC50"
+    ]
+    for i in range(len(labels)):
+        Cell = findCell_CK(labels[i])
+        dr.deleteCell(Cell)
+    return True
+
 # -*- codin
 import LayoutScript
 from LayoutScript import *
@@ -550,9 +605,13 @@ home_directory = Path.home()
 #
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v18.gds")
 # Test structures
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v47.GDS")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v51.GDS")
 # Guard ring test structures
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Compile_term_options_v2.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Compile_term_options_v3.gds")
+# remove redundant
+e = remove_labels()
+# Labels
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Device_Labelv9_REF.GDS")
 # List of SLAC cells
 #SLAC_TS_List = ["Block_AC", "Block_DJ", "Block_RT", "Block_CEP", "gr_test_block1", "gr_test_block2"]
 SLAC_TS_List = ["Block_AC", "Block_CEP", "Block_DJ", "Block_RT", "gr_test_block1", "gr_test_block2"]
@@ -584,7 +643,7 @@ CellFill = True if len(MFill_name) >= 1 else False
 ZA_Fill = True if len(ZAFill_name) >= 1 else False
 InvertOF = True if len(NWDFill_name) + len(subNWD_list) >= 1 else False
 nfill = len(MFill_name) + len(ZAFill_name) + len(NWDFill_name) + len(subNWD_list)
-
+Labels = True
 
 OD = 1  # Defines active window
 JTE = 116  # Junction termination extension IMPLANT (NP-JTE)
@@ -620,9 +679,15 @@ WLayer2 = 251
 WLayer3 = 252
 WLayer4 = 253
 
+FDATA = 167 # Frame Cell (FDATA)
+PTemp1 = 168
+PTemp2 = 169
+PTemp3 = 170
+
+
 OTL = WLayer1  # outline for drawing
 
-Temp_Layers = [WLayer1, WLayer2, WLayer3, WLayer4]
+Temp_Layers = [WLayer1, WLayer2, WLayer3, WLayer4, PTemp2, PTemp3]
 
 # inset of active
 OD_inset = 120
@@ -688,7 +753,7 @@ Via_Widths = [V1_Width, V2_Width, ZG_Width]
 Via_Spaces = [V1_Space, V2_Space, ZG_Space]
 Via_Layers = [V1, V2, ZG]
 
-# metal ine half-widths
+# metal line half-widths
 M1_Width_2 = 500
 M2_Width_2 = 2000
 # 2/20/25 reduced from 2000 to fix DRV
@@ -744,7 +809,6 @@ M3FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
 ZA_FillCell = NewCell("Za_Fill")
 ZA_FillCell.addBox(-3000, -3000, 6000, 6000, ZA)
 ZA_FillCell.addBox(-4000, -4000, 8000, 8000, OTL)
-
 
 Pad_Widths = [M1_Width_2, M2_Width_2, M3_Width_2]
 # Max area square pads
@@ -931,9 +995,14 @@ Strip_Fill = [False, True, True, True, True,
 
 Strip_PS = [True, True, False, False, True, True, False, False, True,
             False, False, False, False]
+
 Strip_Contacty = ["Strp125CY", "Strp50CY", "Strp50CY", "Strp50CY", "Strp50CY",
                   "Strp100CY", "Strp100CY", "Strp100CY", "Strp100CY",
                   "Strp100CY", "Strp100CY", "Strp100CY", "Strp100CY"]
+
+# Edge PWD in 3mm cells - leave out - Julie
+# Ex_PWD = NewCell("ex_PWD_3mm")
+#makeFrame(Ex_PWD, offset_3mm, 250000, PWD)
 
 VM1M2 = findCell_CK("V1_Via_4x4")
 VM2M3 = findCell_CK("V2_Via_4x4")
@@ -1133,6 +1202,11 @@ for i in range(len(Strip_Pitch)):
         Strip_Arrays.append(Strip_name[i] + "_Arr3mm")
         name = Strip_name[i] + "_Arr3mm"
         astr = NewCell(name)
+        # add labels
+        if Labels: place_label(astr, name, True)
+        # if Labels:
+        #     LCell = findCell_CK("Label_"+name)
+        #     astr.addCellref(LCell,point(label_x_3mm,label_y_3mm))
         cellnames_3mm.append(name)
 
         #       e = ST_add_Array(astr, cd, SPitch, Slength, STXY_Active)
@@ -1175,6 +1249,11 @@ for i in range(len(Strip_Pitch)):
         astr = NewCell(name)
         cellnames_3mm.append(name)
 
+        # add labels
+        if Labels: place_label(astr, name, True)
+        # if Labels:
+        #     LCell = findCell_CK("Label_"+name)
+        #     astr.addCellref(LCell,point(label_x_3mm,label_y_3mm))
         NstX, NstY, pref, poff = cArray(SPitch*2, Slength, STXY_Active)
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
         # Add fill
@@ -1189,6 +1268,7 @@ for i in range(len(Strip_Pitch)):
         if "AC" in Strip_name[i]:
             astr.addCellref(cacp, point(0, 0))
             astr.addCellref(cacc, point(0, 0))
+
 
     if SPitch == 12500:
         astr = NewCell(Strip_name[i] + "_Arr")
@@ -1430,7 +1510,7 @@ for i in range(len(RTname)):
     if CellFill and RTname[i] in MFill_name:
         print(" Cell " + RTname[i])
         csize = 1000
-        osize = 0
+        osize = -2000
         e = addMxFill(RT_ptr, mlayer, TLayer, FCell_25, csize, osize)
 
     #
@@ -1539,14 +1619,12 @@ cotl = "Cell_Outline"
 Outline = NewCell(cotl)
 Outline.addBox(-XYCell_2, -XYCell_2, XYCell, XYCell, OTL)
 #
-#  Make assemblies
-#
+#  Make assemblies ###
 CellList = []
 #
 #	 AC LGAD Cells
 # add third option for small electrode cell
 #
-# ACL_list = ["Assy_AC_", "Assy_AC_"]
 # ZAfill blocking layers
 ZA_exclude = [PWD, WLayer4, ZA]
 # temporary working layers
@@ -1558,17 +1636,21 @@ for i in range(len(AC_Type)):
     cname = "Assy_AC_" + AC_Type[i]
     Assy_AC = NewCell(cname)
     ACPName = "AC_Array_" + AC_Type[i]
-    #	print(ACPName)
-    # clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", "ACPxl_Fill", Border_List[i]]
-#    clist = ["AC_Layer", ACPName, cotl, "JTE", "Gain_Layer", Border_List[i], "Exclude_edge_PWD"]
+
     clist = ["AC_Layer", ACPName, cotl, "Gain_Layer", Border_List[i], "Exclude_edge_PWD"]
     makeAssy(Assy_AC, clist)
-#   add ZA Fill
+    # add labels
+    if Labels: place_label(Assy_AC, cname, False)
+        # LabelCell = findCell_CK("Label_"+cname)
+        # Assy_AC.addCellref(LabelCell,point(label_x_6mm,label_y_6mm))
+        # Assy_AC.addCellref(LabelCell, point(label_x_6mm, -label_y_6mm))
+    #   add ZA Fill
     if (ZA_Fill and cname in ZAFill_name):
         print(cname + " ZA Fill")
-#        addZAFill(Assy_AC, ZA, WLayer2, ZA_FillCell)
         addMZFill(Assy_AC, ZA_exclude, tlyr, ZA_FillCell, 2000, 0)
     CellList.append(cname)
+
+
 #
 #	 DJ LGAD Cells
 #
@@ -1581,6 +1663,7 @@ for i in range(len(DJ_Type)):
 #    clist = [DJPName, cotl, "JTE", "DJ_PN", Border_List[i], "Exclude_edge_PWD"] 3/25/25
     clist = [DJPName, cotl, "DJ_PN", Border_List[i], "Exclude_edge_PWD"]
     makeAssy(Assy_DJ, clist)
+    if Labels: place_label(Assy_DJ, cname, False)
     #   add ZA Fill
     if (ZA_Fill and cname in ZAFill_name):
         print(cname + " ZA Fill")
@@ -1602,6 +1685,11 @@ for i in range(len(NG_Type)):
     # clist = [NGName, cotl, "JTE", Border_List[i], "Exclude_edge_PWD"] 3/25/25
     clist = [NGName, cotl, Border_List[i], "Exclude_edge_PWD"]
     makeAssy(Assy_NGPX, clist)
+    if Labels: place_label(Assy_NGPX, cname, False)
+    # if Labels:
+    #     LabelCell = findCell_CK("Label_"+cname)
+    #     Assy_NGPX.addCellref(LabelCell,point(label_x_6mm,label_y_6mm))
+    #     Assy_NGPX.addCellref(LabelCell, point(label_x_6mm, -label_y_6mm))
     #   add ZA Fill
     if (ZA_Fill and cname in ZAFill_name):
         print(cname + " ZA Fill")
@@ -1621,6 +1709,7 @@ for i in range(len(NI_Type)):
     # clist = [NGName, cotl, "JTE",  "DJ_PN", Border_List[1], "Exclude_edge_PWD"]
     clist = [NGName, cotl, "DJ_PN", Border_List[1], "Exclude_edge_PWD"]
     makeAssy(Assy_NIDJ, clist)
+    if Labels: place_label(Assy_NIDJ, cname, False)
     #     #   add ZA Fill
     if (ZA_Fill and cname in ZAFill_name):
         print(cname + " ZA Fill")
@@ -1641,6 +1730,7 @@ for i in range(1):
     # print(Strip_Arrays[i])
     clist = (Strip_Arrays[i], cotl, border, "Exclude_edge_PWD")
     makeAssy(STX_Ass, clist)
+    if Labels: place_label(STX_Ass, cname, False)
     if (ZA_Fill and cname in ZAFill_name):
         print(cname + " ZA Fill")
     #    addZAFill(STX_Ass, ZA, WLayer2, ZA_FillCell)
@@ -1657,6 +1747,7 @@ DJPName = "DJA_" + DJ_Type[1] + "_noBump"
 clist = [DJPName, cotl, "DJ_PN", No_Pad_border[1], "Exclude_edge_PWD"]
 #
 makeAssy(Assy_DJ_NB, clist)
+if Labels: place_label(Assy_DJ_NB, cname, False)
 if (ZA_Fill and cname in ZAFill_name):
     print(cname + " ZA Fill")
 #    addZAFill(Assy_DJ_NB, ZA, WLayer2, ZA_FillCell)
@@ -1721,6 +1812,11 @@ for i in range(len(RTCname)):
 #    clist = (RTname[i] + "_Arry", "6mm_with_pads", "RT_Fill")
     clist = (RTname[i] + "_Arry", cotl, Border_List[i], RTF_list[i], "Exclude_edge_PWD")
     makeAssy(RTAss, clist)
+    if Labels: place_label(RTAss, cnam, False)
+    # if Labels:
+    #     LabelCell = findCell_CK("Label_"+cnam)
+    #     RTAss.addCellref(LabelCell,point(label_x_6mm,label_y_6mm))
+    #     RTAss.addCellref(LabelCell, point(label_x_6mm, -label_y_6mm))
     if (ZA_Fill and cnam in ZAFill_name):
         print(cnam + " ZA Fill")
         # addZAFill(RTAss, ZA, WLayer2, ZA_FillCell)
@@ -1734,13 +1830,20 @@ if InvertOF:
         if CellList[i] in NWDFill_name:
             print( " Form NWD for " + CellList[i])
             dr.setCell(CellList[i])
-            l.booleanTool.boolOnLayer(PWD, 0, NWD, "A invert")
+            l.booleanTool.boolOnLayer(FDATA, PTemp1, PTemp2, "A+B")
+            l.booleanTool.boolOnLayer(PWD, PTemp2, PTemp3, "A+B")
+            l.booleanTool.boolOnLayer(PTemp3, 0, NWD, "A invert")
+
     for i in range(len(subNWD_list)):
         print(" Form NWD for " + subNWD_list[i])
         dr.setCell(subNWD_list[i])
-        l.booleanTool.boolOnLayer(PWD, 0, NWD, "A invert")
+        l.booleanTool.boolOnLayer(FDATA, PTemp1, PTemp2, "A+B")
+        l.booleanTool.boolOnLayer(PWD, PTemp2, PTemp3, "A+B")
+        l.booleanTool.boolOnLayer(PTemp3, 0, NWD, "A invert")
 #  Delete temporary working layers
-dr.deleteLayer(PWD)
+#dr.deleteLayer(PWD)
+#dr.deleteLayer(PTemp3)
+#dr.deleteLayer(PTemp2)
 for i in range(len(Temp_Layers)):
      dr.deleteLayer(Temp_Layers[i])
 #
@@ -1789,7 +1892,7 @@ print(CellList)
 now = datetime.now()
 filetime = now.strftime("%Y_%m_%d_%H_%M")
 filefill = f"{int(CellFill)}{int(InvertOF)}{int(ZA_Fill)}{int(nfill)}"
-gdsversion = "V29_r6"
+gdsversion = "V30_r1"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion +  ".gds"
 print(gdsfile)
 
