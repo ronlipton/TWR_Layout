@@ -576,6 +576,11 @@ def remove_labels():
         dr.deleteCell(Cell)
     return True
 
+def delcellbyname(cname):
+    Cell = findCell_CK(cname)
+    dr.deleteCell(Cell)
+    return True
+
 # -*- codin
 import LayoutScript
 from LayoutScript import *
@@ -605,13 +610,13 @@ home_directory = Path.home()
 #
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v18.gds")
 # Test structures
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v51.GDS")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v52.GDS")
 # Guard ring test structures
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Compile_term_options_v3.gds")
 # remove redundant
 e = remove_labels()
 # Labels
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Device_Labelv9_REF.GDS")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Device_Labelv10_REF.GDS")
 # List of SLAC cells
 #SLAC_TS_List = ["Block_AC", "Block_DJ", "Block_RT", "Block_CEP", "gr_test_block1", "gr_test_block2"]
 SLAC_TS_List = ["Block_AC", "Block_CEP", "Block_DJ", "Block_RT", "gr_test_block1", "gr_test_block2"]
@@ -621,23 +626,26 @@ MFill_name = ["Str50_AC", "Str100_AC", "Str100AC_20", "Str100AC_40", "Str100AC_6
               "ACPad_50", "ACPad_100",
               "Str50_DJ", "Str50_DJNPS", "Str50_AC", "Str50_NOGN",
               "Str100_DJ", "Str100_DJNPS", "Str100_AC", "Str100_NOGN"]
-#MFill_name = []
+# MFill_name = []
 
 # Cells for ZA fill(ZA_Fill)
 ZAFill_name = ["Assy_AC_50","Assy_AC_100","AssyDJ_50","AssyDJ_100","AssyPX_50_NG","AssyPX_100_NG","Assy_Str125_Arr",
-"AssyDJ_NB_100","Assy_str_3mm_50","Assy_str_3mm_100","Assy_ACStr_Elec","Assy_RTPixel","Assy_RT_100","AssyDJ_100_NoPS"]
-#ZAFill_name = []
+"AssyDJ_NB_100","Assy_RTPixel","Assy_RT_100","AssyDJ_100_NoPS",
+"Str100_AC_Arr3mm", "Str100_DJNPS_Arr3mm", "Str100_DJ_Arr3mm","Str100_NOGN_Arr3mm",
+"Str50_AC_Arr3mm", "Str50_DJNPS_Arr3mm", "Str50_DJ_Arr3mm", "Str50_NOGN_Arr3mm",
+"Str100AC_20_Arr3mm", "Str100AC_40_Arr3mm", "Str100AC_60_Arr3mm", "Str100AC_80_Arr3mm"]
+# ZAFill_name = ["Str100_AC_Arr3mm"]
 
 # Cells for NWD generation (InvertOF)
 NWDFill_name = ["Assy_AC_50","Assy_AC_100","AssyDJ_50","AssyDJ_100","AssyPX_50_NG","AssyPX_100_NG","Assy_Str125_Arr",
 "AssyDJ_NB_100","Assy_RTPixel","Assy_RT_100","AssyDJ_100_NoPS"]
 # NWDFill_name = ["Assy_Str125_Arr"]
-#NWDFill_name = []
+# NWDFill_name = []
 
 subNWD_list = ["Str100_AC_Arr3mm", "Str100_DJNPS_Arr3mm", "Str100_DJ_Arr3mm", "Str100_NOGN_Arr3mm",
 "Str50_AC_Arr3mm", "Str50_DJNPS_Arr3mm", "Str50_DJ_Arr3mm", "Str50_NOGN_Arr3mm",
 "Str100AC_20_Arr3mm", "Str100AC_40_Arr3mm", "Str100AC_60_Arr3mm", "Str100AC_80_Arr3mm"]
-#subNWD_list = []
+# subNWD_list = []
 
 CellFill = True if len(MFill_name) >= 1 else False
 ZA_Fill = True if len(ZAFill_name) >= 1 else False
@@ -809,6 +817,11 @@ M3FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
 ZA_FillCell = NewCell("Za_Fill")
 ZA_FillCell.addBox(-3000, -3000, 6000, 6000, ZA)
 ZA_FillCell.addBox(-4000, -4000, 8000, 8000, OTL)
+
+# ZAfill blocking layers
+ZA_exclude = [PWD, WLayer4, ZA]
+# temporary working layers
+tlyr = [WLayer1, WLayer2, WLayer3]
 
 Pad_Widths = [M1_Width_2, M2_Width_2, M3_Width_2]
 # Max area square pads
@@ -1204,18 +1217,14 @@ for i in range(len(Strip_Pitch)):
         astr = NewCell(name)
         # add labels
         if Labels: place_label(astr, name, True)
-        # if Labels:
-        #     LCell = findCell_CK("Label_"+name)
-        #     astr.addCellref(LCell,point(label_x_3mm,label_y_3mm))
+
         cellnames_3mm.append(name)
 
         #       e = ST_add_Array(astr, cd, SPitch, Slength, STXY_Active)
         NstX, NstY, pref, poff = cArray(SPitch, Slength, STXY_Active)
 
         e = astr.addCellrefArray(cd, pref, poff, NstX, NstY)
-        # Add fill - not needed - border metal is close
-        # fref = l.drawing.findCell("Str_Fill")
-        # e = astr.addCellref(fref, point(0, 0))
+
         # Add border
         bref = findCell_CK(Border3mm[i])
         e = astr.addCellref(bref, point(0, 0))
@@ -1227,6 +1236,9 @@ for i in range(len(Strip_Pitch)):
         if "AC" in Strip_name[i]:
             astr.addCellref(cacp, point(0, 0))
             astr.addCellref(cacc, point(0, 0))
+        if (ZA_Fill and name in ZAFill_name):
+            print(name + " ZA Fill")
+            addMZFill(astr, ZA_exclude, tlyr, ZA_FillCell, 2000, 0)
 
     if SPitch == 50000:
         #   make two copies of strip for staggered pads
@@ -1268,6 +1280,9 @@ for i in range(len(Strip_Pitch)):
         if "AC" in Strip_name[i]:
             astr.addCellref(cacp, point(0, 0))
             astr.addCellref(cacc, point(0, 0))
+        if (ZA_Fill and name in ZAFill_name):
+            print(name + " ZA Fill")
+            addMZFill(astr, ZA_exclude, tlyr, ZA_FillCell, 2000, 0)
 
 
     if SPitch == 12500:
@@ -1625,10 +1640,6 @@ CellList = []
 #	 AC LGAD Cells
 # add third option for small electrode cell
 #
-# ZAfill blocking layers
-ZA_exclude = [PWD, WLayer4, ZA]
-# temporary working layers
-tlyr = [WLayer1, WLayer2, WLayer3]
 
 Border_List = ["6mm_50um_pitch_bumps", "6mm_100um_pitch_bumps",  "6mm_100um_pitch_bumps"]
 AC_Type = ["50", "100"]
@@ -1777,10 +1788,6 @@ for i in range(2):
     c_3mm.addCellref(exedge_PWD, point(0, 0))
     # exclude internal NWD
     c_3mm.addCellref(PWD_X, point(0, 0))
-    #   add ZA Fill
-    if (ZA_Fill and cname in ZAFill_name):
-        print(cname + " ZA Fill")
-        addMZFill(c_3mm, ZA_exclude, tlyr, ZA_FillCell, 2000, 0)
     CellList.append(cname)
 #
 #   Add AC pitch variants
@@ -1798,9 +1805,7 @@ c_3mm.addCellref(Outline, point(0,0))
 c_3mm.addCellref(exedge_PWD, point(0, 0))
 c_3mm.addCellref(PWD_X, point(0, 0))
     #   remove extra fill in LL corners
-if (ZA_Fill and cname in ZAFill_name):
-    print(cname + " ZA Fill")
-    addMZFill(c_3mm, ZA_exclude, tlyr, ZA_FillCell, 2000, 0)
+
 CellList.append(cname)
 # CellList.append(cname)
 
@@ -1842,10 +1847,13 @@ if InvertOF:
         l.booleanTool.boolOnLayer(PTemp3, 0, NWD, "A invert")
 #  Delete temporary working layers
 #dr.deleteLayer(PWD)
-#dr.deleteLayer(PTemp3)
-#dr.deleteLayer(PTemp2)
+# Delete temporary layers
 for i in range(len(Temp_Layers)):
      dr.deleteLayer(Temp_Layers[i])
+# Delete temporary cells
+e = delcellbyname("Cell_Outline")
+e = delcellbyname("Exclude_edge_PWD")
+e = delcellbyname("PWD_Cross")
 #
 #   Add SLAC structures
 #
@@ -1892,7 +1900,7 @@ print(CellList)
 now = datetime.now()
 filetime = now.strftime("%Y_%m_%d_%H_%M")
 filefill = f"{int(CellFill)}{int(InvertOF)}{int(ZA_Fill)}{int(nfill)}"
-gdsversion = "V30_r1"
+gdsversion = "V30_r2"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion +  ".gds"
 print(gdsfile)
 
