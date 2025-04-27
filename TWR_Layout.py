@@ -528,15 +528,17 @@ def place_label(tcell, cname, l3mm):
         label_x = -800000
         label_y = -1410000
         logo_x = 750000
-        logo_y = -1414000
+        logo_y = -1416500
     else:
         label_x = -2300000
         label_y = -2910000
         logo_x = 2250000
         logo_y = -2915000
+    #    logo_x = 1800000
+    #    logo_y = -2935000
 
     LabelCell = findCell_CK("Label_" + cname)
-    LogoCell = findCell_CK("Logo_all")
+    LogoCell = findCell_CK("logo_RL")
     tcell.addCellref(LabelCell, point(label_x, label_y))
     tcell.addCellref(LabelCell, point(label_x, -label_y))
 
@@ -611,22 +613,31 @@ home_directory = Path.home()
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v18.gds")
 # Test structures
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v52.GDS")
+#e = remove_logos()
 # Guard ring test structures
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Compile_term_options_v3.gds")
 # remove redundant
 e = remove_labels()
 # Labels
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Device_Labelv10_REF.GDS")
+# Logos
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Logos_RL.GDS")
 # List of SLAC cells
-#SLAC_TS_List = ["Block_AC", "Block_DJ", "Block_RT", "Block_CEP", "gr_test_block1", "gr_test_block2"]
 SLAC_TS_List = ["Block_AC", "Block_CEP", "Block_DJ", "Block_RT", "gr_test_block1", "gr_test_block2"]
+
+SLAC_chips = ["AC_T3x3Arry_Mid_Gain","AC_T3x3Arry_Wide_Gain","AC_TPad_Gain_MidGap","AC_TPad_NoGain_MidGap",
+"CEP_DJ_T3x3_Arry_gain","CEP_DJ_TPAD_gain","CEP_RT_T3x3_Arry_Gain_JTE_pStop","CEP_RT_TPAD_gain",
+"DJ_T3x3_Arry_gain","DJ_T3x3_Arry_nogain","DJ_TPADgain","DJ_TPAD_nogain",
+"RT_T3x3_Arry_Gain_JTE_pStop","RT_T3x3_Arry_Gain_noJTE_pstop","RT_TPADgain","RT_TPAD_nogain",
+"JTE_Oring","JTE_lring","JTE_2ring","JTE_3ring",
+"DJ_Oring","DJ_lring","JTE_5ring","JTE_Sring_smaller_space"]
 
 # Cells for metal fill(CellFill)
 MFill_name = ["Str50_AC", "Str100_AC", "Str100AC_20", "Str100AC_40", "Str100AC_60", "Str100AC_80","RTPixel","RT_100", "DJ_100Base",
               "ACPad_50", "ACPad_100",
               "Str50_DJ", "Str50_DJNPS", "Str50_AC", "Str50_NOGN",
               "Str100_DJ", "Str100_DJNPS", "Str100_AC", "Str100_NOGN"]
-# MFill_name = []
+#MFill_name = []
 
 # Cells for ZA fill(ZA_Fill)
 ZAFill_name = ["Assy_AC_50","Assy_AC_100","AssyDJ_50","AssyDJ_100","AssyPX_50_NG","AssyPX_100_NG","Assy_Str125_Arr",
@@ -634,18 +645,20 @@ ZAFill_name = ["Assy_AC_50","Assy_AC_100","AssyDJ_50","AssyDJ_100","AssyPX_50_NG
 "Str100_AC_Arr3mm", "Str100_DJNPS_Arr3mm", "Str100_DJ_Arr3mm","Str100_NOGN_Arr3mm",
 "Str50_AC_Arr3mm", "Str50_DJNPS_Arr3mm", "Str50_DJ_Arr3mm", "Str50_NOGN_Arr3mm",
 "Str100AC_20_Arr3mm", "Str100AC_40_Arr3mm", "Str100AC_60_Arr3mm", "Str100AC_80_Arr3mm"]
-# ZAFill_name = ["Str100_AC_Arr3mm"]
+#ZAFill_name = []
 
 # Cells for NWD generation (InvertOF)
 NWDFill_name = ["Assy_AC_50","Assy_AC_100","AssyDJ_50","AssyDJ_100","AssyPX_50_NG","AssyPX_100_NG","Assy_Str125_Arr",
 "AssyDJ_NB_100","Assy_RTPixel","Assy_RT_100","AssyDJ_100_NoPS"]
 # NWDFill_name = ["Assy_Str125_Arr"]
-# NWDFill_name = []
+#NWDFill_name = []
 
 subNWD_list = ["Str100_AC_Arr3mm", "Str100_DJNPS_Arr3mm", "Str100_DJ_Arr3mm", "Str100_NOGN_Arr3mm",
 "Str50_AC_Arr3mm", "Str50_DJNPS_Arr3mm", "Str50_DJ_Arr3mm", "Str50_NOGN_Arr3mm",
 "Str100AC_20_Arr3mm", "Str100AC_40_Arr3mm", "Str100AC_60_Arr3mm", "Str100AC_80_Arr3mm"]
-# subNWD_list = []
+#subNWD_list = []
+
+All_chips = SLAC_chips + NWDFill_name + subNWD_list
 
 CellFill = True if len(MFill_name) >= 1 else False
 ZA_Fill = True if len(ZAFill_name) >= 1 else False
@@ -678,11 +691,11 @@ PD = 21  # p contact implant
 # PST = 117  # p stop (NC)
 ND = 19  # n contact IMPLANT
 PW = 78  # P-well IMPLANT
-OF = 228  # p well
+# OF = 78  # p well
 PWD = 228 # proper name
 NWD = 227  # NOT NWD is PW
 
-WLayer1 = 250
+WLayer1 = 155
 WLayer2 = 251
 WLayer3 = 252
 WLayer4 = 253
@@ -799,12 +812,12 @@ M12FCell_25.addBox(-500, -500, 1000, 1000, M2)
 M12FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
 
 # M1 25% fill cell
-M1FCell_25 = NewCell("M12Fill_25pct")
+M1FCell_25 = NewCell("M1Fill_25pct")
 M1FCell_25.addBox(-500, -500, 1000, 1000, M1)
 M1FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
 
 # M2 25% fill cell
-M2FCell_25 = NewCell("M12Fill_25pct")
+M2FCell_25 = NewCell("M2Fill_25pct")
 M2FCell_25.addBox(-500, -500, 1000, 1000, M2)
 M2FCell_25.addBox(-1000, -1000, 2000, 2000, OTL)
 
@@ -848,7 +861,7 @@ CA4x4 = NewCell("Contact_4x4")
 e = CA4x4.addCellref(ml, point(0, 0))
 e = CA4x4.addCellref(M1Pad, point(0, 0))
 #  Add ohmic n contact region for CA cell
-NDCAWid_2 = 200
+NDCAWid_2 = 250
 CA4x4.addBox(-NDCAWid_2, -NDCAWid_2, 2*NDCAWid_2, 2*NDCAWid_2, ND)
 CA4x4.addBox(-NDCAWid_2 + OD_inset, -NDCAWid_2 + OD_inset, 2*NDCAWid_2 - 2 * OD_inset,
              2*NDCAWid_2 - 2 * OD_inset, OD)
@@ -929,9 +942,12 @@ e = BP_60.addCellref(BP_M3_Via_60, point(0, padLength_60 // 2 - ZGM3_ovr- BPM3Le
 e = BP_60.addCellref(BP_M3_Via_60, point(0, -padLength_60 // 2 + ZGM3_ovr + BPM3Length//2))
 
 #   Bump Pad_Cell
+# mod 4/25/25 for DRV
 BCell = NewCell("BumpPad")
 DrawBump(BCell, 9500, ZA)  # Standard bump pad - check dimensions
 DrawBump(BCell, 6500, ZP)
+#DrawBump(BCell, 7500, ZG)
+#DrawBump(BCell, 9500, M3)
 
 # Metal-Via stack for pads not including CA
 # 2/20/25  modify to use nrrower m2 for this cell
@@ -941,13 +957,17 @@ MPad_List = [Pad_List[0],M2_1100,Pad_List[2]]
 M23V23Z = NewCell("M1M2V1V2ZG_Pad")
 
 for Layer in range(3):
-    M23V23Z.addCellref(MPad_List[Layer], point(0, 0))
-    M23V23Z.addCellref(Via_List[Layer], point(0, 0))
+    M23V23Z.addCellref(MPad_List[Layer], point(0, -8000))
+    M23V23Z.addCellref(Via_List[Layer], point( 0, -8000))
+    M23V23Z.addCellref(MPad_List[Layer], point(0, 8000))
+    M23V23Z.addCellref(Via_List[Layer], point( 0, 8000))
     M23V23Z.addCellref(BCell, point(0, 0))
 
 M3ZG = NewCell("ZG_Pad")
-M3ZG.addCellref(Pad_List[2], point(0, 0))
-M3ZG.addCellref(Via_List[2], point(0, 0))
+M3ZG.addCellref(Pad_List[2], point(-8000, 0))
+M3ZG.addCellref(Via_List[2], point(-8000, 0))
+M3ZG.addCellref(Pad_List[2], point(8000, 0))
+M3ZG.addCellref(Via_List[2], point(8000, 0))
 M3ZG.addCellref(BCell, point(0, 0))
 
 #   Fill Cells
@@ -1199,9 +1219,8 @@ for i in range(len(Strip_Pitch)):
     if CellFill and DCStripn in MFill_name:
     #    e = M1M2M3Fill(DCStripn, FLayers, FDensity, FOffset, FWidth, FSpace, FFrame)
         print(" Cell " + DCStripn)
-        e = addMxFill(cd, [M1, M2], TLayer, M12FCell_25, csize, osize)
-    #    e = addMxFill(cd, [M1], TLayer, M1FCell_25, csize, osize)
-    #    e = addMxFill(cd, [M2], TLayer, M2FCell_25, csize, osize)
+        e = addMxFill(cd, [M2], TLayer, M2FCell_25, csize, osize)
+        e = addMxFill(cd, [M1], TLayer, M1FCell_25, 1000, -1000)
         e = addMxFill(cd, [M3], TLayer, M3FCell_25, csize, osize)
 
 
@@ -1845,8 +1864,9 @@ if InvertOF:
         l.booleanTool.boolOnLayer(FDATA, PTemp1, PTemp2, "A+B")
         l.booleanTool.boolOnLayer(PWD, PTemp2, PTemp3, "A+B")
         l.booleanTool.boolOnLayer(PTemp3, 0, NWD, "A invert")
-#  Delete temporary working layers
-#dr.deleteLayer(PWD)
+    #  Delete temporary working layers
+    dr.deleteLayer(PWD)
+
 # Delete temporary layers
 for i in range(len(Temp_Layers)):
      dr.deleteLayer(Temp_Layers[i])
@@ -1878,11 +1898,12 @@ Ret_H_2 = Ret_H // 2
 X0 = -XYCell * (NCellx - 1) // 2
 Y0 = -XYCell * (NCelly - 1) // 2
 
+
 c = l.drawing.addCell()
 cnam = "Reticule"
 c.thisCell.cellName = cnam
 Ret = c.thisCell
-Ret.addBox(-Ret_W_2, -Ret_H_2, Ret_W, Ret_H, OTL)
+# Ret.addBox(-Ret_W_2, -Ret_H_2, Ret_W, Ret_H, OTL)
 
 for i in range(len(CellList)):
     RRow = i // NCellx
@@ -1900,10 +1921,9 @@ print(CellList)
 now = datetime.now()
 filetime = now.strftime("%Y_%m_%d_%H_%M")
 filefill = f"{int(CellFill)}{int(InvertOF)}{int(ZA_Fill)}{int(nfill)}"
-gdsversion = "V30_r2"
+gdsversion = "V31_r0"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion +  ".gds"
 print(gdsfile)
-
 l.drawing.saveFile(gdsfile)
 
 print("Writing File " + gdsfile +  " Python script completed")
