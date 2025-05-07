@@ -549,7 +549,7 @@ def place_label(tcell, cname, l3mm):
 
 def remove_labels():
     labels = [
-        "Label_AssyDJ100",
+        "Label_AssyDJ_100",
         "Label_AssyRT_100",
         "Label_Str50_NOGN_arr3mm",
         "Label_Str50_AC_arr3mm",
@@ -610,17 +610,16 @@ home_directory = Path.home()
 #
 #   Import SLAC portions
 #
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v18.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v19a.gds")
 # Test structures
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v52.GDS")
-#e = remove_logos()
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v56.GDS")
 # Guard ring test structures
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Compile_term_options_v3.gds")
-# remove redundant
-e = remove_labels()
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Compile_term_options_v4.gds")
+# remove redundant labels - no longer needed (4/28/25)?
+#e = remove_labels()
 # Labels
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Device_Labelv10_REF.GDS")
-# Logos
+# Logos -
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Logos_RL.GDS")
 # List of SLAC cells
 SLAC_TS_List = ["Block_AC", "Block_CEP", "Block_DJ", "Block_RT", "gr_test_block1", "gr_test_block2"]
@@ -658,7 +657,7 @@ subNWD_list = ["Str100_AC_Arr3mm", "Str100_DJNPS_Arr3mm", "Str100_DJ_Arr3mm", "S
 "Str100AC_20_Arr3mm", "Str100AC_40_Arr3mm", "Str100AC_60_Arr3mm", "Str100AC_80_Arr3mm"]
 #subNWD_list = []
 
-All_chips = SLAC_chips + NWDFill_name + subNWD_list
+#All_chips = SLAC_chips + NWDFill_name + subNWD_list
 
 CellFill = True if len(MFill_name) >= 1 else False
 ZA_Fill = True if len(ZAFill_name) >= 1 else False
@@ -1921,7 +1920,7 @@ print(CellList)
 now = datetime.now()
 filetime = now.strftime("%Y_%m_%d_%H_%M")
 filefill = f"{int(CellFill)}{int(InvertOF)}{int(ZA_Fill)}{int(nfill)}"
-gdsversion = "V31_r0"
+gdsversion = "V31_r2"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion +  ".gds"
 print(gdsfile)
 l.drawing.saveFile(gdsfile)

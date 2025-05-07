@@ -17,18 +17,18 @@ def editGDS(gdsv):
     now = datetime.datetime.now()
     filetime = now.strftime("_%Y_%m_%d_%H_%M")
     #  input main gds file
-    ingdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_11134V27_r3.gds"
+    ingdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/" + gdsv
     # file containing cells to update
-    modgdsfile1 = str(home_directory) + "/Dropbox/Programming/TWR_layout/SLAC_Layouts/TWR_Test3x3_v30.GDS"
-    modgdsfile2 = str(home_directory) + "/Dropbox/Programming/TWR_layout/SLAC_Layouts/compile_term_options_v2.gds"
+    modgdsfile1 = str(home_directory) + "/Dropbox/Programming/TWR_layout/SLAC_Layouts/TWR_Test3x3_v56.GDS"
+    #modgdsfile2 = str(home_directory) + "/Dropbox/Programming/TWR_layout/SLAC_Layouts/compile_term_options_v2.gds"
     #modgdsfile3 = str(home_directory) + "/Dropbox/Programming/TWR_layout/Contact_4x4.gds"
     #modlist = [modgdsfile1, modgdsfile2, modgdsfile3]
-    modlist = [modgdsfile1, modgdsfile2]
+    modlist = [modgdsfile1]
 
     # time stamped updated file
     # Input Reticule
     dr.importFile(ingdsfile)
-    outgdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/Edit_" + gdsv + filetime + ".gds"
+    outgdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/TWR_11165V31_r2.gds"
 
     for i in range(len(modlist)):
         dr.updateFile(modlist[i])
@@ -51,7 +51,7 @@ def main():
     SetUp = setup()  # work around as static string variables are not handled correctly
 
     # import os
-    editGDS("V27_r3")
+    editGDS("TWR_11165V31_r1.gds")
 
 
 if __name__ == "__main__":
