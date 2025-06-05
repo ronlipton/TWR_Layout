@@ -3,6 +3,9 @@ from LayoutScript import *
 import datetime
 import sys
 
+from TWR_Layout import WLayer2
+
+
 # from TWR_Layout import TLayer
 
 def addLD(chip):
@@ -19,8 +22,8 @@ def addLD(chip):
     #
     start_time = time.time()
     #  input main gds file
-    ingdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/Chips_V31_r2/" + chip + ".gds"
-    outgdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/Chips_V31_r2/" + chip + "_LD.gds"
+    ingdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/V31_r3/Chips/" + chip + ".gds"
+    outgdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/V31_r3/Chips_LD/" + chip + ".gds"
 
     dr.importFile(ingdsfile)
     exists = dr.setCell(chip)
@@ -32,21 +35,30 @@ def addLD(chip):
     #`  temp layer is 203
     TLayer3 = 203
     TLayer4 = 204
+    WLayer2 = 251
     PD = 21
     ND = 19
     RS_PAC = 55
     LD =119
     GASO = 226
     l.booleanTool.boolOnLayer(PD,ND, TLayer3, "A+B")
-    l.booleanTool.boolOnLayer(ND, RS_PAC, TLayer4, "A+B")
+    l.booleanTool.boolOnLayer(TLayer3, LD, TLayer4, "A+B")
+    #  do not add LD over guard rings
+    l.drawing.deselectAll()
+    # l.booleanTool.boolOnLayer(GASO, GASO, WLayer2, "A+B")
+    #l.drawing.activeLayer = WLayer2
+    #l.drawing.selectActiveLayer()
+    #l.drawing.currentCell.sizeAdjustSelect(-30000, 0)
+    #l.drawing.deselectAll()
     l.booleanTool.boolOnLayer(GASO, TLayer4, LD, "A-B", 0, 0, 2)
     l.drawing.activeLayer = LD
     l.drawing.selectActiveLayer()
     l.drawing.currentCell.sizeAdjustSelect(50, 0)
 
+    dr.deleteLayer(WLayer2)
     dr.deleteLayer(TLayer3)
     dr.deleteLayer(TLayer4)
-    l.filename = "/Users/lipton/Library/CloudStorage/Dropbox/Programming/TWR_layout/Chips_V31_r2/Assy_Str125_Arr_LD.gds"
+    # l.filename = "/Users/lipton/Library/CloudStorage/Dropbox/Programming/TWR_layout/Chips_V31_r2/Assy_Str125_Arr_LD.gds"
     print("Writing " + outgdsfile +" time elapsed: {:.2f}s".format(time.time() - start_time))
     l.drawing.saveFile(outgdsfile)
     dr.deleteAllCell()
@@ -77,7 +89,7 @@ def main():
                   "JTE_0ring", "JTE_1ring", "JTE_2ring", "JTE_3ring",
                   "DJ_0ring", "DJ_1ring", "JTE_5ring", "JTE_5ring_smaller_space"]
 
-    All_chips = SLAC_chips + NWDFill_name + subNWD_list
+    All_chips = NWDFill_name + subNWD_list + SLAC_chips
     All_chips= ["Assy_AC_50"]
     for chip in All_chips:
         addLD(chip)

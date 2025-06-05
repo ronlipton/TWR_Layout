@@ -583,6 +583,12 @@ def delcellbyname(cname):
     dr.deleteCell(Cell)
     return True
 
+def addLDFill(cd, OTL, LD, ND, ovlp):
+    dr.setCell(cd)
+    l.booleanTool.boolOnLayer(OTL,ND,LD,"A-B")
+    l.drawing.currentCell.sizeAdjustSelect(ovlp,0)
+    return
+
 # -*- codin
 import LayoutScript
 from LayoutScript import *
@@ -610,11 +616,11 @@ home_directory = Path.home()
 #
 #   Import SLAC portions
 #
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v19a.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/compile_border_v20.gds")
 # Test structures
 dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/TWR_Test3x3_v56.GDS")
 # Guard ring test structures
-dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Compile_term_options_v4.gds")
+dr.importFile("/Users/lipton/Dropbox/Programming/TWR_layout/SLAC_layouts/Compile_term_options_v5.gds")
 # remove redundant labels - no longer needed (4/28/25)?
 #e = remove_labels()
 # Labels
@@ -636,7 +642,7 @@ MFill_name = ["Str50_AC", "Str100_AC", "Str100AC_20", "Str100AC_40", "Str100AC_6
               "ACPad_50", "ACPad_100",
               "Str50_DJ", "Str50_DJNPS", "Str50_AC", "Str50_NOGN",
               "Str100_DJ", "Str100_DJNPS", "Str100_AC", "Str100_NOGN"]
-#MFill_name = []
+# MFill_name = []
 
 # Cells for ZA fill(ZA_Fill)
 ZAFill_name = ["Assy_AC_50","Assy_AC_100","AssyDJ_50","AssyDJ_100","AssyPX_50_NG","AssyPX_100_NG","Assy_Str125_Arr",
@@ -662,8 +668,10 @@ subNWD_list = ["Str100_AC_Arr3mm", "Str100_DJNPS_Arr3mm", "Str100_DJ_Arr3mm", "S
 CellFill = True if len(MFill_name) >= 1 else False
 ZA_Fill = True if len(ZAFill_name) >= 1 else False
 InvertOF = True if len(NWDFill_name) + len(subNWD_list) >= 1 else False
+# number of filled cells
 nfill = len(MFill_name) + len(ZAFill_name) + len(NWDFill_name) + len(subNWD_list)
 Labels = True
+LDFill = True
 
 OD = 1  # Defines active window
 JTE = 116  # Junction termination extension IMPLANT (NP-JTE)
@@ -693,7 +701,7 @@ PW = 78  # P-well IMPLANT
 # OF = 78  # p well
 PWD = 228 # proper name
 NWD = 227  # NOT NWD is PW
-
+LD = 119
 WLayer1 = 155
 WLayer2 = 251
 WLayer3 = 252
@@ -703,7 +711,6 @@ FDATA = 167 # Frame Cell (FDATA)
 PTemp1 = 168
 PTemp2 = 169
 PTemp3 = 170
-
 
 OTL = WLayer1  # outline for drawing
 
@@ -1221,7 +1228,8 @@ for i in range(len(Strip_Pitch)):
         e = addMxFill(cd, [M2], TLayer, M2FCell_25, csize, osize)
         e = addMxFill(cd, [M1], TLayer, M1FCell_25, 1000, -1000)
         e = addMxFill(cd, [M3], TLayer, M3FCell_25, csize, osize)
-
+    if LDFill and "AC" in DCStripn:
+        addLDFill(cd, OTL, LD, ND, 50)
 
 
     if SPitch == 100000:
@@ -1397,8 +1405,11 @@ for i in range(len(Pitch)):
     xpm = wbox+500
     xm = [xpm, -xpm, -xpm, xpm]
     ym = [xpm, xpm, -xpm, -xpm]
-#    erdraw(cpad, xm, ym, 2*DJIWid_2, 0, PWD, 0)
+#   add LD fill
+    if LDFill:
+        addLDFill(cpad, OTL, LD, ND, 50)
 
+    #  Add variants (noBump, noPS)
     # cell without central bump
     dpad = NewCell(DJName[i] + "_NoBump")
     e = dpad.addCellref(cpad, point(0, 0))
@@ -1535,6 +1546,10 @@ for i in range(len(RTname)):
         # Contact electrode
         left_right = JTEEdge
         rtpad.addBox(-left_right, -FP_metalw[k], 2 * left_right, 2 * FP_metalw[k], Pad_Layers[k])
+
+#   add LD fill
+    if LDFill:
+        addLDFill(rtpad, OTL, LD, ND, 50)
     # add fill
     #
     dr.setCell(RTname[i])
@@ -1600,6 +1615,8 @@ for i in range(len(name)):
         csize = 2000
         osize = -1000
         e = addMxFill(cd, mlayer, TLayer, FCell_25, csize, osize)
+    if LDFill:
+        addLDFill(cd, OTL, LD, ND, 50)
 
     apad = NewCell(aname[i])
     xoff = -(((NPXRow[i]) - 1) * ACPitch[i]) // 2
@@ -1920,7 +1937,8 @@ print(CellList)
 now = datetime.now()
 filetime = now.strftime("%Y_%m_%d_%H_%M")
 filefill = f"{int(CellFill)}{int(InvertOF)}{int(ZA_Fill)}{int(nfill)}"
-gdsversion = "V31_r2"
+gdsversion = "V32_r0"
+# gdsversion = "UNI"
 gdsfile = str(home_directory) +  "/Dropbox/Programming/TWR_layout/TWR_" + filefill + gdsversion +  ".gds"
 print(gdsfile)
 l.drawing.saveFile(gdsfile)

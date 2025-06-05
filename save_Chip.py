@@ -44,7 +44,7 @@ def saveGDS(gdsfile):
 
     for chip in All_chips:
         dr.importFile(ingdsfile)
-        outgdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/Chips_V31_r2/" + chip + ".gds"
+        outgdsfile = str(home_directory) + "/Dropbox/Programming/TWR_layout/V31_r3/Chips/" + chip + ".gds"
         exists = dr.setCell(chip)
 
         if (not exists):
@@ -67,7 +67,7 @@ def main():
     SetUp = setup()  # work around as static string variables are not handled correctly
 
     # import os
-    saveGDS("TWR_11165V31_r2.gds")
+    saveGDS("TWR_0000V31_r3.gds")
 
 
 if __name__ == "__main__":
